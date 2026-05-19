@@ -30,7 +30,13 @@ goaljaby takes a PRD folder (manual or from `/show-me-the-prd`) and auto-produce
 
 ### 4. Run
 
-With an existing PRD directory:
+With an existing PRD directory — **absolute path recommended**:
+
+```
+/goaljaby /Users/<username>/my-project/PRD/
+```
+
+Relative paths also work:
 
 ```
 /goaljaby ./PRD/

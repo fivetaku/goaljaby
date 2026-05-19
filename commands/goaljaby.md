@@ -1,7 +1,7 @@
 ---
 name: goaljaby
 description: PRD 폴더를 받아 VALIDATION/RECOVERY/PLAN/PROGRESS/goal-command.md 5종을 자동 생성하고 사람 승인 후 /goal 본문을 코드블럭으로 안내한다 (Claude Code 전용).
-argument-hint: "[PRD 디렉토리 경로 — 비우면 묻기]"
+argument-hint: "[PRD 디렉토리 절대 경로 (예: /Users/<username>/my-project/PRD/) — 비우면 묻기]"
 ---
 
 # /goaljaby — 골잡이 호출
