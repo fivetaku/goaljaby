@@ -1,7 +1,7 @@
 {
   "name": "goaljaby",
-  "version": "0.1.0",
-  "description": "Bridge skill from PRD to /goal — auto-generates 5 docs (VALIDATION/RECOVERY/PLAN/PROGRESS/goal-command.md) with 4,000-character compact and protected-clause regex enforcement, then emits a runnable /goal command for Claude Code paste-back or a Codex CLI handoff prompt after human approval.",
+  "version": "0.2.0",
+  "description": "Bridge skill from PRD to /goal for Claude Code — auto-generates 5 docs (VALIDATION/RECOVERY/PLAN/PROGRESS/goal-command.md) with 4,000-character compact and protected-clause regex enforcement, then surfaces a runnable /goal body for paste-back after a mandatory human approval gate.",
   "author": {
     "name": "fivetaku",
     "url": "https://github.com/fivetaku"
@@ -18,8 +18,6 @@
     "recovery",
     "compact",
     "claude-code",
-    "codex-cli",
-    "handoff",
     "korean"
   ]
 }

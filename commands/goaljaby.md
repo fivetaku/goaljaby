@@ -1,12 +1,12 @@
 ---
 name: goaljaby
-description: PRD 폴더를 받아 VALIDATION/RECOVERY/PLAN/PROGRESS/goal-command.md 5종을 자동 생성하고 사람 승인 후 /goal까지 실행한다. Codex CLI 타깃이면 핸드오프 프롬프트도 함께 발행.
+description: PRD 폴더를 받아 VALIDATION/RECOVERY/PLAN/PROGRESS/goal-command.md 5종을 자동 생성하고 사람 승인 후 /goal 본문을 코드블럭으로 안내한다 (Claude Code 전용).
 argument-hint: "[PRD 디렉토리 경로 — 비우면 묻기]"
 ---
 
 # /goaljaby — 골잡이 호출
 
-PRD 디렉토리를 받아 골 운영 5종 문서를 자동 생성하고, 검토·승인을 거쳐 `/goal` 실행 또는 Codex 핸드오프까지 처리한다.
+PRD 디렉토리를 받아 골 운영 5종 문서를 자동 생성하고, 검토·승인을 거쳐 `/goal` 본문을 코드블럭으로 안내한다 (사용자가 다음 메시지로 직접 붙여넣음).
 
 ## 인수 파싱
 
@@ -17,9 +17,9 @@ PRD 디렉토리를 받아 골 운영 5종 문서를 자동 생성하고, 검토
 ## 실행
 
 1. `skills/goaljaby/SKILL.md`의 워크플로우 10단계를 순서대로 실행
-2. Step 2 CLI 타깃 선택 → Step 3 작업 유형 → Step 4 마일스톤 확정까지 인터뷰 진행
+2. Step 2 (Claude Code 운영 컨텍스트 자동 확정) → Step 3 작업 유형 → Step 4 마일스톤 확정까지 인터뷰 진행
 3. Step 5에서 5개 파일 생성, Step 6에서 4,000자 자동 컴팩트, Step 7 자체 검증
-4. Step 9 사람 검토 게이트에서 승인 받으면 Step 10 /goal 실행 또는 Codex 핸드오프
+4. Step 9 사람 검토 게이트에서 승인 받으면 Step 10에서 /goal 본문을 코드블럭으로 출력 (사용자가 다음 메시지로 직접 붙여넣음)
 
 ## 안전장치
 

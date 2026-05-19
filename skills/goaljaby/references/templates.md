@@ -68,11 +68,9 @@
 
 ## C. RECOVERY.md
 
-`{RETRY_LIMIT_ACTIONS_BY_CLI}` 는 target_cli에 따라 달라진다 (cli-rules.md 참조):
+`{RETRY_LIMIT_ACTIONS_BY_CLI}` 는 Claude Code 전용으로 고정된 문구다:
 
-- `claude_code`: "골이 진단·검토에 진입하고 자체 수정을 멈춘다. `/goal pause`는 사용할 수 없으므로 사람 결정을 기다린다. 필요 시 `/goal clear` 후 재설정."
-- `codex_cli`: "골이 `/goal pause`로 자동 정지한다. 사람 결정 후 `/goal resume`."
-- `both`: "골이 자체 수정을 멈추고 사람 결정을 기다린다. CLI별 pause/resume 사용은 작업자가 판단한다."
+"골이 진단·검토에 진입하고 자체 수정을 멈춘다. `/goal pause`는 Claude Code가 지원하지 않으므로 사람 결정을 기다린다. 필요 시 `/goal clear` 후 재설정."
 
 ````md
 # RECOVERY
@@ -227,11 +225,9 @@ PLAN.md의 Milestone 1부터 시작
 
 본문은 `/goal ...` 명령형 다중 줄로 들어간다. Step 6 컴팩트 5단계 적용 전 원본은 다음 6개 중 작업 유형에 맞는 것을 사용한다.
 
-`{RETRY_PAUSE_PHRASE_BY_CLI}` 슬롯은 target_cli에 따라 달라진다:
+`{RETRY_PAUSE_PHRASE_BY_CLI}` 는 Claude Code 전용으로 고정된 문구다:
 
-- `claude_code`: "stop self-edits and pause for human decision (Claude Code does not support /goal pause)"
-- `codex_cli`: "pause via /goal pause and await human decision"
-- `both`: "stop further self-edits and await human decision"
+"stop self-edits and pause for human decision (Claude Code does not support /goal pause)"
 
 > ⚠️ 모든 F 템플릿은 PROTECTED_CLAUSES 5종(P1~P5)을 반드시 포함하도록 작성됐다. 슬롯 치환 후에도 5종 정규식이 모두 매칭되어야 한다 (Step 7 검증).
 
@@ -327,6 +323,6 @@ If the same eval target fails after 3 attempts, {RETRY_PAUSE_PHRASE_BY_CLI}.
 1. Step 1 결과에서 `{PROJECT_NAME}`, `{GOAL_ONE_LINER}`, `{ACCEPTANCE_MAPPING_ROWS}`, `{OPEN_QUESTIONS_FROM_PRD_OR_NONE}` 추출
 2. Step 2/3/4 인터뷰 결과에서 `{TARGET_CLI}`, `{TASK_TYPE}`, 검증 명령 multiSelect, 마일스톤 확정 결과 추출
 3. `task-type-templates.md`에서 `{TASK_TYPE}` 행을 읽어 `{TASK_TYPE_NOT_DONE_IF_ADDITIONS}`, `{TASK_TYPE_SCOPE_ADDITIONS}`, 사용할 /goal 템플릿(F-1~F-6) 결정
-4. `{TARGET_CLI}`에서 `{RETRY_LIMIT_ACTIONS_BY_CLI}`, `{RETRY_PAUSE_PHRASE_BY_CLI}` 결정
+4. CLI 슬롯 (`{RETRY_LIMIT_ACTIONS_BY_CLI}`, `{RETRY_PAUSE_PHRASE_BY_CLI}`) 은 Claude Code 전용 고정 문구로 치환 (위 참조)
 5. 5개 파일 본문 생성. 마지막에 빈 `{...}` 슬롯 잔존 여부 확인 — 있으면 해당 줄 제거 또는 합리적 기본값으로 치환
 6. goal-command.md만 Step 6 컴팩트로 전달

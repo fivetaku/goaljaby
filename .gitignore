@@ -11,5 +11,8 @@ node_modules/
 .idea/
 .vscode/
 
+# OMC session state (not deployed)
+.omc/
+
 # Plugin-specific (handoff doc — session-scoped, not deployed)
 HANDOFF.md
