@@ -1,3 +1,5 @@
+English | [한국어](README.ko.md)
+
 # goaljaby (골잡이)
 
 <p align="center">

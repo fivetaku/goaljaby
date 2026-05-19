@@ -1,6 +1,6 @@
 {
   "name": "goaljaby",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Bridge skill from PRD to /goal for Claude Code — auto-generates 5 docs (VALIDATION/RECOVERY/PLAN/PROGRESS/goal-command.md) with 4,000-character compact and protected-clause regex enforcement, then surfaces a runnable /goal body for paste-back after a mandatory human approval gate.",
   "author": {
     "name": "fivetaku",
