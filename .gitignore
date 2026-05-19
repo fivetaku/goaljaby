@@ -1,0 +1,15 @@
+.DS_Store
+*.log
+__pycache__/
+*.pyc
+.pytest_cache/
+.mypy_cache/
+node_modules/
+.env
+.env.local
+*.swp
+.idea/
+.vscode/
+
+# Plugin-specific (handoff doc — session-scoped, not deployed)
+HANDOFF.md
