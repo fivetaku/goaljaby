@@ -1,12 +1,12 @@
 ---
 name: goaljaby
-description: PRD 폴더를 받아 한국어 검토 문서 5종 + GOAL_BRIEF.md를 자동 생성하고, 사용자 승인 후 어시스턴트가 응답 마지막 줄로 /goal을 보내 다음 턴에서 골 작업을 시작한다 (Claude Code 전용).
+description: PRD 폴더를 받아 한국어 검토 문서 5종을 자동 생성하고, 검토 요약을 대화창에 띄운 뒤 사용자 승인을 받으면 어시스턴트가 응답 마지막 줄로 /goal을 보내 다음 턴에서 골 작업을 시작한다 (Claude Code 전용).
 argument-hint: "[PRD 디렉토리 절대 경로 (예: /Users/<username>/my-project/PRD/) — 비우면 묻기]"
 ---
 
 # /goaljaby — 골잡이 호출
 
-PRD 디렉토리를 받아 한국어 검토 문서 5종(VALIDATION/RECOVERY/PLAN/PROGRESS/goal-command.md)과 GOAL_BRIEF.md를 생성하고, 사용자 검토·승인을 거쳐 응답 마지막 줄로 `/goal`을 보내 다음 턴에서 골 작업을 시작한다. 사용자가 본문을 따로 입력할 필요는 없다.
+PRD 디렉토리를 받아 한국어 검토 문서 5종(VALIDATION/RECOVERY/PLAN/PROGRESS/goal-command.md)을 생성하고, Step 8에서 한국어 검토 요약을 대화창에 띄우고 PROGRESS.md 상단에 4줄 요약을 prepend한다. 사용자 검토·승인을 거쳐 응답 마지막 줄로 `/goal`을 보내 다음 턴에서 골 작업을 시작한다. 사용자가 본문을 따로 입력할 필요는 없다.
 
 ## 인수 파싱
 
@@ -19,7 +19,7 @@ PRD 디렉토리를 받아 한국어 검토 문서 5종(VALIDATION/RECOVERY/PLAN
 1. `skills/goaljaby/SKILL.md`의 워크플로우 10단계를 순서대로 실행한다.
 2. Step 2 (Claude Code 운영 컨텍스트 자동 확정) → Step 3 작업 유형·검증 방식·엄격도 → Step 4 마일스톤 확정까지 인터뷰 진행.
 3. Step 5에서 한국어 템플릿으로 5개 파일 생성, Step 6에서 4,000자 자동 컴팩트, Step 7 자체 검증 (PROTECTED_CLAUSES 한·영 OR 정규식 + 영어 헤딩 잔존 검사).
-4. Step 8에서 한국어 GOAL_BRIEF.md 생성 + 화면에 같은 요약 표시.
+4. Step 8에서 한국어 검토 요약을 대화창에 표시 + PROGRESS.md 상단에 4줄 요약 prepend (별도 파일 X).
 5. Step 9 사람 검토 게이트(AskUserQuestion): 승인 / 수정 / 나중에 / 취소.
 6. 승인 시 Step 10에서 PROGRESS.md에 시작 기록 + 응답 *마지막 줄*에 `/goal {본문 한 줄}` 출력 → 시스템이 다음 턴 입력으로 처리해 골 작업을 시작.
 

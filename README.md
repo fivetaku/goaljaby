@@ -8,7 +8,7 @@ English | [한국어](README.ko.md)
 
 > **PRD-to-/goal bridge for Claude Code — Korean review docs, then the goal starts right after your approval.**
 
-goaljaby takes a PRD folder (manual or from `/show-me-the-prd`) and auto-produces six Korean review documents wrapping a verify/recover loop — VALIDATION, RECOVERY, PLAN, PROGRESS, the `/goal` command body, and a `GOAL_BRIEF.md` summary. You read in Korean, approve once, and the goal starts on the next turn — the assistant emits the `/goal` line for you.
+goaljaby takes a PRD folder (manual or from `/show-me-the-prd`) and auto-produces five Korean review documents wrapping a verify/recover loop — VALIDATION, RECOVERY, PLAN, PROGRESS, and the `/goal` command body. The Korean review summary is shown directly in chat (no extra file), and a 4-line summary is prepended to PROGRESS.md for handoff. You read in Korean, approve once, and the goal starts on the next turn — the assistant emits the `/goal` line for you.
 
 [Quick Start](#quick-start) • [Why goaljaby?](#why-goaljaby) • [How it works](#how-it-works) • [Outputs](#outputs) • [Task types](#task-types) • [Commands](#commands) • [Requirements](#requirements)
 
@@ -57,7 +57,8 @@ Or just say it naturally:
 
 - **A PRD alone isn't enough** — A PRD says *what* to build. `/goal` requires *how to prove it's done* and *how to recover when it goes wrong*. Missing either, the goal stops at "looks plausible" or drifts off-scope.
 - **Korean review, not English boilerplate** — Generated documents are Korean-first so users actually read and review before approving. Headings like 필수 검증, 완료 기준 매핑, 완료로 보지 않는 조건 — not their English equivalents.
-- **Approve once, work begins** — After your approval, the assistant emits `/goal {body}` on the last line of its reply and the session starts the goal on the next turn. You read the Korean `GOAL_BRIEF.md` summary, approve, and the work begins.
+- **Review summary lives in chat** — No extra brief file. Step 8 shows a Korean review summary directly in chat and prepends a 4-line summary to PROGRESS.md so handoff still works.
+- **Approve once, work begins** — After your approval, the assistant emits `/goal {body}` on the last line of its reply and the session starts the goal on the next turn. You read the Korean review summary, approve, and the work begins.
 - **4,000-char compact is enforced, not warned** — Claude Code's `/goal` has a 4,000-character ceiling. goaljaby applies a 5-stage compact and aborts cleanly with a structural-overflow report if it still cannot fit. No silent truncation.
 - **PROTECTED_CLAUSES are uncuttable** — Stop condition, scope lock, 3-attempt rule, doc-read directive, and PROGRESS update are verified by Korean+English OR regex after compact. If any clause is missing post-compact, the output is discarded.
 - **Mandatory human approval gate** — Step 9's AskUserQuestion is non-bypassable. The goal only starts after your explicit approval.
@@ -88,8 +89,8 @@ PRD directory
      │   + character count + English-heading-leak check
      │   On failure → structural overflow report + DISCARD
      ▼
-[Step 8] Generate Korean GOAL_BRIEF.md + show summary
-     │   목표 / 마일스톤 / 필수 검증 / scope 잠금 / 사람 결정
+[Step 8] Show Korean review summary in chat
+     │   + prepend 4-line summary to PROGRESS.md (handoff)
      ▼
 [Step 9] AskUserQuestion — approve / revise / later / cancel
      ▼
@@ -108,12 +109,11 @@ PRD directory
 ├── VALIDATION.md      ← 필수 검증 / 완료 기준 매핑 / 완료로 보지 않는 조건
 ├── RECOVERY.md        ← 기본 원칙 / 실패 루프 / 재시도 한계 / scope 잠금
 ├── PLAN.md            ← 목표 / 마일스톤(≤5) / 최종 완료 기준
-├── PROGRESS.md        ← 빈 초기 템플릿 (Step 10에서 시작 기록 append)
-├── goal-command.md    ← /goal 본문 (한국어, ≤4,000 chars)
-└── GOAL_BRIEF.md      ← Step 8 review summary (Korean)
+├── PROGRESS.md        ← 빈 초기 템플릿 + Step 8 4-line summary prepended
+└── goal-command.md    ← /goal 본문 (한국어, ≤4,000 chars)
 ```
 
-All six are Korean-first. File names, command identifiers, and shell commands stay as-is.
+All five are Korean-first. The Step 8 review summary is shown in chat only (no extra file). File names, command identifiers, and shell commands stay as-is.
 
 ---
 
@@ -135,6 +135,7 @@ Task type is auto-estimated from PRD content (weighted Korean + English keyword 
 ## Core promises
 
 - **Generated docs are Korean-first** — English-heading leak is detected in Step 7. If found, results are discarded. No half-English output.
+- **Review summary stays in chat** — No separate brief file. PROGRESS.md gets a 4-line summary at the top for handoff.
 - **`goal-command.md` is always ≤4,000 characters** — If compact can't fit, the file is not saved; a structural-overflow report is printed instead.
 - **PROTECTED_CLAUSES are inviolate** — Stop condition, scope lock, 3-attempt rule, doc references, and PROGRESS update are protected by Korean+English OR regex.
 - **Step 9 approval gate cannot be bypassed** — Step 10 only fires after explicit human approval.
