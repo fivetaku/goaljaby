@@ -1,6 +1,8 @@
 # 5개 파일 + /goal 명령어 템플릿
 
-골잡이 Step 5에서 슬롯 치환에 사용한다. 메서돌로지 `99_부록_템플릿모음.md` B/C/D/E/F의 골잡이 적용판.
+골잡이 Step 5에서 슬롯 치환에 사용한다. 메서돌로지 `99_부록_템플릿모음.md` B/C/D/E/F의 한국어 적용판.
+
+**언어 정책**: 모든 생성 문서는 한국어 본문 + 영어 식별자(파일명/명령/`PRD` 같은 약어). 사용자가 검토하지 않고 그냥 넘기는 일이 없도록 한국어로 자연스럽게 읽혀야 한다.
 
 작업 유형별 강조 항목은 `task-type-templates.md` 참조.
 
@@ -11,17 +13,17 @@
 ## B. VALIDATION.md
 
 ````md
-# VALIDATION: {PROJECT_NAME}
+# VALIDATION — {PROJECT_NAME}
 
-## Required Checks
+## 필수 검증
 
-다음 명령은 골 완료로 마크하기 전 반드시 실행한다.
+골 완료로 마크하기 전 다음 명령을 반드시 실행한다.
 
 ```bash
 {REQUIRED_CHECK_COMMANDS}
 ```
 
-## Targeted Checks
+## 마일스톤별 검증
 
 각 마일스톤 종료 시 실행한다.
 
@@ -29,109 +31,109 @@
 {TARGETED_CHECK_COMMANDS}
 ```
 
-## Manual Verification
+## 수동 확인 절차
 
 {MANUAL_VERIFICATION_STEPS}
 
 {VISUAL_VERIFICATION_BLOCK_OR_OMIT}
 
-## Acceptance Criteria Mapping
+## 완료 기준 매핑
 
-| PRD criterion | Validation method | Status |
+| PRD 완료 기준 | 검증 방식 | 상태 |
 | --- | --- | --- |
 {ACCEPTANCE_MAPPING_ROWS}
 
-## Not Done If
+## 완료로 보지 않는 조건
 
-- Any required check fails
-- Scope changed outside PLAN.md
-- Public API changed without explicit approval
-- Manual repro still fails
-- Artifact is generated but not inspected
-- Test was deleted or skipped to pass the check
-- Error was silenced without diagnosis
+- 필수 검증 중 하나라도 실패
+- PLAN.md 밖의 scope로 변경됨
+- 명시적 승인 없이 public API가 변경됨
+- 수동 재현이 여전히 실패함
+- 산출물이 생성됐지만 검토되지 않음
+- 검증을 통과시키기 위해 테스트가 삭제·skip됨
+- 진단 없이 에러가 침묵 처리됨
 {TASK_TYPE_NOT_DONE_IF_ADDITIONS}
 ````
 
 `{VISUAL_VERIFICATION_BLOCK_OR_OMIT}` 는 UI 작업일 때만 다음 블록을 삽입, 그 외에는 행 자체 제거:
 
 ```md
-## Visual Verification
+## 시각 검증 (UI 작업)
 
-- [ ] Desktop viewport checked
-- [ ] Mobile viewport checked
-- [ ] Text does not overlap
-- [ ] Screenshot saved at: {SCREENSHOT_PATH}
+- [ ] 데스크톱 viewport 확인
+- [ ] 모바일 viewport 확인
+- [ ] 텍스트 겹침·잘림 없음
+- [ ] 스크린샷 저장 위치: {SCREENSHOT_PATH}
 ```
 
 ---
 
 ## C. RECOVERY.md
 
-`{RETRY_LIMIT_ACTIONS_BY_CLI}` 는 Claude Code 전용으로 고정된 문구다:
+`{RETRY_LIMIT_ACTIONS}` 는 Claude Code 전용 고정 문구로 치환된다:
 
-"골이 진단·검토에 진입하고 자체 수정을 멈춘다. `/goal pause`는 Claude Code가 지원하지 않으므로 사람 결정을 기다린다. 필요 시 `/goal clear` 후 재설정."
+> "골이 진단·검토 모드로 전환되고 자체 수정을 멈춘다. Claude Code는 `/goal pause`를 지원하지 않으므로 사람의 결정을 기다린다. 필요하면 `/goal clear` 후 재설정한다."
 
 ````md
 # RECOVERY
 
-## Core Rule
+## 기본 원칙
 
-If validation fails, do not immediately make a broad change. Diagnose first.
+검증이 실패하면 곧바로 광범위한 수정에 들어가지 않는다. 진단부터 한다.
 
-## Failure Loop
+## 실패 루프
 
-When a validation step fails:
+검증 단계가 실패하면 다음 순서를 따른다.
 
-1. Read the full failure output.
-2. Identify failure category: implementation bug / incorrect test / missing dependency / environment / unclear requirement / scope conflict.
-3. Compare against PRD.md, PLAN.md, and VALIDATION.md.
-4. Make the smallest reversible fix.
-5. Re-run the smallest relevant validation first.
-6. Update PROGRESS.md.
+1. 실패 출력을 끝까지 읽는다.
+2. 실패 유형을 분류한다: 구현 버그 / 잘못된 테스트 / 의존성 누락 / 환경 문제 / 요구사항 불명확 / scope 충돌.
+3. PRD.md, PLAN.md, VALIDATION.md와 비교한다.
+4. 가장 작은 가역 수정 1회를 한다.
+5. 가장 작은 관련 검증부터 재실행한다.
+6. PROGRESS.md를 업데이트한다.
 
-## Retry Limit
+## 재시도 한계
 
-If the same validation fails after 3 distinct attempts:
+같은 검증이 서로 다른 3회 시도(3 attempts) 후에도 실패하면:
 
-{RETRY_LIMIT_ACTIONS_BY_CLI}
+{RETRY_LIMIT_ACTIONS}
 
-Report:
-- failing command or criterion
-- three attempted fixes
-- why each failed
-- safest next options
-- whether user/product guidance is needed
+다음을 보고한다:
+- 실패한 명령 또는 기준
+- 시도한 3가지 수정
+- 각각의 실패 이유
+- 다음으로 안전한 옵션
+- 사용자·제품 결정이 필요한지 여부
 
-## Scope Control
+## scope 잠금
 
-Do not:
-- rewrite unrelated modules
-- change public APIs unless PLAN.md says so
-- change database schema unless SDD.md says so
-- remove or skip tests to make checks pass
-- silence errors without understanding them
-- introduce broad refactors while fixing a narrow issue
-- replace the validation command itself
+다음은 금지한다:
+- 무관한 모듈을 다시 작성
+- PLAN.md에 명시되지 않은 public API 변경
+- SDD.md에 명시되지 않은 DB 스키마 변경
+- 검증을 통과시키기 위해 테스트를 삭제·skip
+- 이해 없이 에러를 침묵 처리
+- 좁은 문제를 광범위한 refactor로 해결
+- 검증 명령 자체를 다른 명령으로 교체
 {TASK_TYPE_SCOPE_ADDITIONS}
 
-## Reorientation Rule
+## 방향 재확인 규칙
 
-Before changing approach:
+접근법을 바꾸기 전에:
 
-1. Reread the goal statement.
-2. Reread Non-goals in PRD.md.
-3. Reread current milestone in PLAN.md.
-4. Confirm the next edit directly serves the current milestone.
+1. 골 문장을 다시 읽는다.
+2. PRD.md의 Non-goals를 다시 읽는다.
+3. PLAN.md의 현재 마일스톤을 다시 읽는다.
+4. 다음 수정이 현재 마일스톤에 직접 기여하는지 확인한다.
 
-## Revert Rule
+## 되돌리기 규칙
 
-Only revert your own last failed change if:
-- it made validation worse,
-- it introduced unrelated changes,
-- or it conflicts with PRD / PLAN.
+자기 자신의 마지막 실패 변경만 되돌린다. 단, 다음 중 하나일 때:
+- 변경이 검증을 더 악화시켰을 때
+- 무관한 변경을 함께 들여왔을 때
+- PRD / PLAN과 충돌할 때
 
-Do not revert user changes unless explicitly instructed.
+사용자가 수동으로 만든 변경은 명시적 지시 없이 절대 되돌리지 않는다.
 ````
 
 ---
@@ -141,13 +143,13 @@ Do not revert user changes unless explicitly instructed.
 `{MILESTONES_BLOCK}` 은 마일스톤 1~5개의 반복.
 
 ````md
-# PLAN: {PROJECT_NAME}
+# PLAN — {PROJECT_NAME}
 
-## Goal
+## 목표
 
 {GOAL_ONE_LINER}
 
-## Source Documents
+## 참조 문서
 
 - PRD.md ({PRD_PATH})
 - VALIDATION.md
@@ -155,21 +157,21 @@ Do not revert user changes unless explicitly instructed.
 
 {MILESTONES_BLOCK}
 
-## Final Completion Criteria
+## 최종 완료 기준
 
-- [ ] All milestones complete
-- [ ] All checks in VALIDATION.md pass
-- [ ] No scope violations
-- [ ] PROGRESS.md updated
+- [ ] 모든 마일스톤 완료
+- [ ] VALIDATION.md의 모든 검증 통과
+- [ ] scope 위반 없음
+- [ ] PROGRESS.md 업데이트
 ````
 
 마일스톤 1개 형식:
 
 ```md
-## Milestone {N}: {MILESTONE_NAME}
-- Scope: {MILESTONE_SCOPE}
-- Completion: {MILESTONE_COMPLETION}
-- Validation: {MILESTONE_VALIDATION}
+## 마일스톤 {N}: {MILESTONE_NAME}
+- 범위(Scope): {MILESTONE_SCOPE}
+- 완료 조건: {MILESTONE_COMPLETION}
+- 검증: {MILESTONE_VALIDATION}
 ```
 
 ---
@@ -179,141 +181,141 @@ Do not revert user changes unless explicitly instructed.
 ````md
 # PROGRESS
 
-## Current Goal
+## 현재 골
 
 {GOAL_ONE_LINER}
 
-## Current Milestone
+## 현재 마일스톤
 
-Milestone 1 시작 전
+마일스톤 1 시작 전
 
-## Completed
+## 완료
 
 (없음)
 
-## Last Validation
+## 마지막 검증 결과
 
 ```text
 (골 실행 전)
 ```
 
-## Failed Attempts
+## 실패 시도
 
-| Attempt | Change | Result | Lesson |
+| 시도 | 변경 | 결과 | 배운 점 |
 | --- | --- | --- | --- |
 
-## Current Best State
+## 현재 가장 안정적인 상태
 
 골 실행 전 — 초기 상태
 
-## Next Step
+## 다음 단계
 
-PLAN.md의 Milestone 1부터 시작
+PLAN.md의 마일스톤 1부터 시작
 
-## Risks / Blockers
+## 리스크 / 블로커
 
 {OPEN_QUESTIONS_FROM_PRD_OR_NONE}
 
-## Handoff Notes
+## 인수인계 메모
 
 이 PROGRESS.md는 골잡이가 생성했다. 골 실행 중 매 체크포인트마다 갱신된다.
 ````
 
 ---
 
-## F. goal-command.md (작업 유형별 본문 6종)
+## F. goal-command.md (작업 유형별 본문 — 6종)
 
-본문은 `/goal ...` 명령형 다중 줄로 들어간다. Step 6 컴팩트 5단계 적용 전 원본은 다음 6개 중 작업 유형에 맞는 것을 사용한다.
+본문은 `/goal` 다음에 한국어로 시작하는 명령. Step 6 컴팩트 5단계 적용 전 원본은 다음 6개 중 작업 유형에 맞는 것을 사용한다.
 
-`{RETRY_PAUSE_PHRASE_BY_CLI}` 는 Claude Code 전용으로 고정된 문구다:
+`{RETRY_PAUSE_PHRASE}` 는 Claude Code 전용 고정 문구다:
 
-"stop self-edits and pause for human decision (Claude Code does not support /goal pause)"
+> "자체 수정을 멈추고 사람의 결정을 기다린다 (Claude Code는 `/goal pause`를 지원하지 않음)"
 
-> ⚠️ 모든 F 템플릿은 PROTECTED_CLAUSES 5종(P1~P5)을 반드시 포함하도록 작성됐다. 슬롯 치환 후에도 5종 정규식이 모두 매칭되어야 한다 (Step 7 검증).
+> ⚠️ 모든 F 템플릿은 PROTECTED_CLAUSES 5종(P1~P5)을 한국어로 포함하도록 작성됐다. 슬롯 치환 후에도 5종 정규식이 모두 매칭되어야 한다 (Step 7 검증, `compact-strategy.md` 참조).
 
 ### F-1. 버그 수정
 
 ```text
-/goal Fix {BUG_NAME} until the bug repro is fixed and all checks are satisfied.
+/goal {BUG_NAME} 버그가 더 이상 재현되지 않고 VALIDATION.md의 모든 검증이 통과될 때까지 멈추지 말고 수정한다.
 
-Read PRD.md, VALIDATION.md, RECOVERY.md, PLAN.md first.
-Only touch {SCOPE_MODULES} and related tests.
-Do not expand scope beyond PRD.md and PLAN.md.
-Do not change {NO_TOUCH_AREAS}.
-Reproduce the bug before fixing.
-Update PROGRESS.md after each checkpoint.
-If the same validation fails after 3 attempts, {RETRY_PAUSE_PHRASE_BY_CLI}.
+먼저 PRD.md, VALIDATION.md, RECOVERY.md, PLAN.md를 읽는다.
+{SCOPE_MODULES}와 관련 테스트만 수정한다.
+PRD.md와 PLAN.md를 벗어나는 scope 확장은 금지한다.
+{NO_TOUCH_AREAS}는 변경하지 않는다.
+수정 전에 버그를 재현한다.
+각 체크포인트마다 PROGRESS.md를 업데이트한다.
+같은 검증이 3회(3 attempts) 실패하면 {RETRY_PAUSE_PHRASE}.
 ```
 
 ### F-2. 기능 구현
 
 ```text
-/goal Implement the feature described in PLAN until every PRD acceptance criterion is satisfied and all required validation passes.
+/goal PRD.md의 모든 acceptance criterion이 만족되고 VALIDATION.md의 필수 검증이 통과될 때까지 멈추지 말고 PLAN.md의 기능을 구현한다.
 
-Read PRD.md, VALIDATION.md, RECOVERY.md, PLAN.md.
-Work milestone by milestone.
-Do not expand scope beyond PRD.md and PLAN.md.
-Do not implement optional features or change Non-goals.
-Validate after each milestone.
-Update PROGRESS.md after each milestone.
-If validation fails after 3 attempts or requirements conflict, {RETRY_PAUSE_PHRASE_BY_CLI}.
+먼저 PRD.md, VALIDATION.md, RECOVERY.md, PLAN.md를 읽는다.
+마일스톤 단위로 작업한다.
+PRD.md와 PLAN.md를 벗어나는 scope 확장은 금지한다.
+Non-goals 항목이나 선택 기능은 구현하지 않는다.
+각 마일스톤이 끝나면 검증을 실행한다.
+각 마일스톤이 끝나면 PROGRESS.md를 업데이트한다.
+요구사항이 충돌하거나 검증이 3회(3 attempts) 실패하면 {RETRY_PAUSE_PHRASE}.
 ```
 
 ### F-3. UI 구현
 
 ```text
-/goal Implement the UI described in PLAN until every viewport check is complete and reference screens match per VALIDATION.
+/goal PLAN.md의 UI가 빌드되고 실행되며 VALIDATION.md의 참조 화면과 모든 viewport에서 일치할 때까지 멈추지 말고 구현한다.
 
-Read PRD.md, VALIDATION.md, RECOVERY.md, PLAN.md.
-Use existing design patterns in the app.
-Do not expand scope beyond PRD.md and PLAN.md.
-Verify {VIEWPORTS_LIST} layouts.
-Capture screenshots as evidence.
-Update PROGRESS.md after each viewport check.
-If visual output does not match after 3 attempts, {RETRY_PAUSE_PHRASE_BY_CLI}.
+먼저 PRD.md, VALIDATION.md, RECOVERY.md, PLAN.md를 읽는다.
+앱의 기존 디자인 패턴을 사용한다.
+PRD.md와 PLAN.md를 벗어나는 scope 확장은 금지한다.
+{VIEWPORTS_LIST} 레이아웃을 확인한다.
+스크린샷을 증거로 캡처한다.
+각 viewport 확인 후 PROGRESS.md를 업데이트한다.
+시각 출력이 3회(3 attempts) 시도 후에도 일치하지 않으면 {RETRY_PAUSE_PHRASE}.
 ```
 
 ### F-4. 문서 집필
 
 ```text
-/goal Write the document described in PLAN until every section is complete and all review checks are satisfied.
+/goal PLAN.md의 모든 섹션이 완료되고 VALIDATION.md의 모든 검토가 통과될 때까지 멈추지 말고 문서를 집필한다.
 
-Read PRD.md, VALIDATION.md, RECOVERY.md, PLAN.md.
-Write one section at a time.
-Do not expand scope beyond PRD.md and PLAN.md.
-After each section, self-review against VALIDATION.md.
-If a section fails review, rewrite only that section, do not patch.
-Update PROGRESS.md after each section.
-If the same section fails review after 3 attempts, {RETRY_PAUSE_PHRASE_BY_CLI}.
-Do not change tone, scope, or structure outside PRD.md.
+먼저 PRD.md, VALIDATION.md, RECOVERY.md, PLAN.md를 읽는다.
+한 번에 한 섹션씩 작성한다.
+PRD.md와 PLAN.md를 벗어나는 scope 확장은 금지한다.
+각 섹션 작성 후 VALIDATION.md 기준으로 자가 검토한다.
+섹션이 검토에 실패하면 그 섹션만 다시 쓴다. 부분 패치 금지.
+각 섹션 완료 후 PROGRESS.md를 업데이트한다.
+같은 섹션이 3회(3 attempts) 검토에 실패하면 {RETRY_PAUSE_PHRASE}.
+PRD.md를 벗어나는 톤·scope·구조 변경은 금지한다.
 ```
 
 ### F-5. 마이그레이션
 
 ```text
-/goal Migrate {MIGRATION_TARGET} until the new path passes all contract tests and parity is satisfied.
+/goal {MIGRATION_TARGET}의 새 경로가 VALIDATION.md의 모든 계약 테스트와 패리티 체크를 통과할 때까지 멈추지 말고 마이그레이션한다.
 
-Read PRD.md, VALIDATION.md, RECOVERY.md, PLAN.md{SDD_INCLUDE}.
-Keep legacy path available unless PLAN says otherwise.
-Do not expand scope beyond PRD.md and PLAN.md.
-No public API change unless approved.
-Run parity checks after each phase.
-Update PROGRESS.md after each phase.
-If parity fails after 3 attempts, {RETRY_PAUSE_PHRASE_BY_CLI}.
+먼저 PRD.md, VALIDATION.md, RECOVERY.md, PLAN.md{SDD_INCLUDE}를 읽는다.
+PLAN.md에서 명시하지 않는 한 legacy 경로를 유지한다.
+PRD.md와 PLAN.md를 벗어나는 scope 확장은 금지한다.
+승인 없이 public API를 변경하지 않는다.
+각 단계마다 패리티 체크를 실행한다.
+각 단계 완료 후 PROGRESS.md를 업데이트한다.
+패리티가 3회(3 attempts) 실패하면 {RETRY_PAUSE_PHRASE}.
 ```
 
-### F-6. 프롬프트/eval 개선
+### F-6. 프롬프트 / eval 개선
 
 ```text
-/goal Optimize the prompts in PLAN until the eval target is satisfied and all checks pass.
+/goal PLAN.md의 프롬프트가 VALIDATION.md에서 정의한 eval 목표 점수에 도달하고 모든 검증이 통과될 때까지 멈추지 말고 최적화한다.
 
-Read PRD.md, VALIDATION.md, RECOVERY.md, PLAN.md.
-Record baseline scores first.
-Do not expand scope beyond PRD.md and PLAN.md.
-Make one prompt change at a time.
-Run the eval after each change.
-Update PROGRESS.md after each eval run.
-If the same eval target fails after 3 attempts, {RETRY_PAUSE_PHRASE_BY_CLI}.
+먼저 PRD.md, VALIDATION.md, RECOVERY.md, PLAN.md를 읽는다.
+베이스라인 점수를 먼저 기록한다.
+PRD.md와 PLAN.md를 벗어나는 scope 확장은 금지한다.
+한 번에 한 개의 프롬프트만 변경한다.
+변경 후 eval을 실행한다.
+각 eval 실행 후 PROGRESS.md를 업데이트한다.
+같은 eval 목표가 3회(3 attempts) 실패하면 {RETRY_PAUSE_PHRASE}.
 ```
 
 ---
@@ -321,8 +323,8 @@ If the same eval target fails after 3 attempts, {RETRY_PAUSE_PHRASE_BY_CLI}.
 ## 슬롯 채움 순서 (Step 5 알고리즘)
 
 1. Step 1 결과에서 `{PROJECT_NAME}`, `{GOAL_ONE_LINER}`, `{ACCEPTANCE_MAPPING_ROWS}`, `{OPEN_QUESTIONS_FROM_PRD_OR_NONE}` 추출
-2. Step 2/3/4 인터뷰 결과에서 `{TARGET_CLI}`, `{TASK_TYPE}`, 검증 명령 multiSelect, 마일스톤 확정 결과 추출
+2. Step 2/3/4 인터뷰 결과에서 `{TASK_TYPE}`, 검증 명령 multiSelect, 마일스톤 확정 결과 추출
 3. `task-type-templates.md`에서 `{TASK_TYPE}` 행을 읽어 `{TASK_TYPE_NOT_DONE_IF_ADDITIONS}`, `{TASK_TYPE_SCOPE_ADDITIONS}`, 사용할 /goal 템플릿(F-1~F-6) 결정
-4. CLI 슬롯 (`{RETRY_LIMIT_ACTIONS_BY_CLI}`, `{RETRY_PAUSE_PHRASE_BY_CLI}`) 은 Claude Code 전용 고정 문구로 치환 (위 참조)
+4. CLI 슬롯 (`{RETRY_LIMIT_ACTIONS}`, `{RETRY_PAUSE_PHRASE}`)은 위에 명시된 Claude Code 전용 고정 문구로 치환
 5. 5개 파일 본문 생성. 마지막에 빈 `{...}` 슬롯 잔존 여부 확인 — 있으면 해당 줄 제거 또는 합리적 기본값으로 치환
 6. goal-command.md만 Step 6 컴팩트로 전달

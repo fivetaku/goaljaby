@@ -6,9 +6,9 @@ English | [한국어](README.ko.md)
   <img src="assets/goaljaby-hero-01.png" alt="goaljaby" width="320">
 </p>
 
-> **PRD-to-/goal bridge for Claude Code — turn your spec into a verifiable, recoverable, runnable goal.**
+> **PRD-to-/goal bridge for Claude Code — Korean review docs, then the goal starts right after your approval.**
 
-goaljaby takes a PRD folder (manual or from `/show-me-the-prd`) and auto-produces five documents wrapping a verify/recover loop — VALIDATION, RECOVERY, PLAN, PROGRESS, and a runnable `/goal` command — then surfaces the `/goal` body as a code block for paste-back into the same Claude Code session, after a mandatory human approval gate.
+goaljaby takes a PRD folder (manual or from `/show-me-the-prd`) and auto-produces six Korean review documents wrapping a verify/recover loop — VALIDATION, RECOVERY, PLAN, PROGRESS, the `/goal` command body, and a `GOAL_BRIEF.md` summary. You read in Korean, approve once, and the goal starts on the next turn — the assistant emits the `/goal` line for you.
 
 [Quick Start](#quick-start) • [Why goaljaby?](#why-goaljaby) • [How it works](#how-it-works) • [Outputs](#outputs) • [Task types](#task-types) • [Commands](#commands) • [Requirements](#requirements)
 
@@ -38,12 +38,6 @@ With an existing PRD directory — **absolute path recommended**:
 /goaljaby /Users/<username>/my-project/PRD/
 ```
 
-Relative paths also work:
-
-```
-/goaljaby ./PRD/
-```
-
 Without a PRD — goaljaby offers to delegate to `/show-me-the-prd`:
 
 ```
@@ -62,10 +56,11 @@ Or just say it naturally:
 ## Why goaljaby?
 
 - **A PRD alone isn't enough** — A PRD says *what* to build. `/goal` requires *how to prove it's done* and *how to recover when it goes wrong*. Missing either, the goal stops at "looks plausible" or drifts off-scope.
-- **Verify + Recover is the real workload** — VALIDATION (acceptance mapping + Not Done If) and RECOVERY (3-attempt rule + scope lock) keep a multi-turn goal honest. goaljaby auto-generates both from the PRD.
-- **4,000-char compact is enforced, not warned** — Claude Code's `/goal` has a 4,000-character ceiling. goaljaby applies a 5-stage compact and aborts cleanly with a structural-overflow report if it still cannot fit. No silent truncation, no advisory warnings.
-- **PROTECTED_CLAUSES are uncuttable** — Stop condition, scope lock, 3-attempt rule, doc-read directive, and PROGRESS update are required and verified by regex after compact. If any clause is missing post-compact, the output is discarded.
-- **Mandatory human approval gate** — Step 10 will not surface the `/goal` body until human approval comes back from Step 9.
+- **Korean review, not English boilerplate** — Generated documents are Korean-first so users actually read and review before approving. Headings like 필수 검증, 완료 기준 매핑, 완료로 보지 않는 조건 — not their English equivalents.
+- **Approve once, work begins** — After your approval, the assistant emits `/goal {body}` on the last line of its reply and the session starts the goal on the next turn. You read the Korean `GOAL_BRIEF.md` summary, approve, and the work begins.
+- **4,000-char compact is enforced, not warned** — Claude Code's `/goal` has a 4,000-character ceiling. goaljaby applies a 5-stage compact and aborts cleanly with a structural-overflow report if it still cannot fit. No silent truncation.
+- **PROTECTED_CLAUSES are uncuttable** — Stop condition, scope lock, 3-attempt rule, doc-read directive, and PROGRESS update are verified by Korean+English OR regex after compact. If any clause is missing post-compact, the output is discarded.
+- **Mandatory human approval gate** — Step 9's AskUserQuestion is non-bypassable. The goal only starts after your explicit approval.
 
 ---
 
@@ -82,19 +77,26 @@ PRD directory
 [Step 2-4] Interview (1-2 rounds)
      │   task_type, validation methods, strictness, milestones
      ▼
-[Step 5] Slot-fill into 5 documents
-     │   VALIDATION.md / RECOVERY.md / PLAN.md / PROGRESS.md / goal-command.md
+[Step 5] Slot-fill 5 Korean documents
+     │   VALIDATION / RECOVERY / PLAN / PROGRESS / goal-command
      ▼
 [Step 6] Auto-compact goal-command.md to ≤4,000 chars
      │   normalize → externalize → abbreviate → summarize → trim
      ▼
 [Step 7] Deterministic self-verification
-     │   grep -P against 5 PROTECTED_CLAUSES + char count
-     │   On failure → structural overflow report + DISCARD output
+     │   grep -P against 5 Korean+English OR PROTECTED_CLAUSES
+     │   + character count + English-heading-leak check
+     │   On failure → structural overflow report + DISCARD
      ▼
-[Step 8-9] Show outputs + REQUIRED human approval gate
+[Step 8] Generate Korean GOAL_BRIEF.md + show summary
+     │   목표 / 마일스톤 / 필수 검증 / scope 잠금 / 사람 결정
      ▼
-[Step 10] Print /goal body as a code block for paste-back
+[Step 9] AskUserQuestion — approve / revise / later / cancel
+     ▼
+[Step 10] On approval:
+          • Record start time in PROGRESS.md
+          • Emit `/goal {body}` as the last line of the reply
+          • Session starts the goal on the next turn
 ```
 
 ---
@@ -103,14 +105,15 @@ PRD directory
 
 ```
 [PRD directory]/
-├── VALIDATION.md      ← acceptance mapping + Not Done If
-├── RECOVERY.md        ← 3-attempt rule + scope lock + task-type recovery
-├── PLAN.md            ← milestones (≤5) + Final Completion Criteria
-├── PROGRESS.md        ← empty initial template
-└── goal-command.md    ← /goal body (always ≤4,000 chars)
+├── VALIDATION.md      ← 필수 검증 / 완료 기준 매핑 / 완료로 보지 않는 조건
+├── RECOVERY.md        ← 기본 원칙 / 실패 루프 / 재시도 한계 / scope 잠금
+├── PLAN.md            ← 목표 / 마일스톤(≤5) / 최종 완료 기준
+├── PROGRESS.md        ← 빈 초기 템플릿 (Step 10에서 시작 기록 append)
+├── goal-command.md    ← /goal 본문 (한국어, ≤4,000 chars)
+└── GOAL_BRIEF.md      ← Step 8 review summary (Korean)
 ```
 
-Each document's emphasis adapts to the task type (Feature / Bugfix / UI / Doc / Migration / Eval).
+All six are Korean-first. File names, command identifiers, and shell commands stay as-is.
 
 ---
 
@@ -118,12 +121,12 @@ Each document's emphasis adapts to the task type (Feature / Bugfix / UI / Doc / 
 
 | Task type | VALIDATION emphasis | RECOVERY emphasis | /goal template |
 |-----------|---------------------|-------------------|----------------|
-| Feature | Unit + integration tests | Scope lock | F-2 |
-| Bugfix | Original repro + regression | No unrelated module edits | F-1 |
-| UI | Screenshots + viewport checks | Design token protection | F-3 |
-| Doc | Section-by-section review | Frozen-once-approved sections | F-4 |
-| Migration | Parity check + rollback | Public API immutability | F-5 |
-| Eval | Score vs baseline | One prompt change at a time | F-6 |
+| 기능 구현 (Feature) | Unit + integration tests | scope lock | F-2 |
+| 버그 수정 (Bugfix) | Original repro + regression | No unrelated module edits | F-1 |
+| UI 구현 | Screenshots + viewport checks | design token protection | F-3 |
+| 문서 집필 | Section-by-section review | Frozen-once-approved sections | F-4 |
+| 마이그레이션 | Parity check + rollback | public API immutability | F-5 |
+| eval 개선 | Score vs baseline | One prompt change at a time | F-6 |
 
 Task type is auto-estimated from PRD content (weighted Korean + English keyword matching) and finalized by the user in Step 3.
 
@@ -131,9 +134,10 @@ Task type is auto-estimated from PRD content (weighted Korean + English keyword 
 
 ## Core promises
 
-- **`goal-command.md` is always ≤4,000 characters** — If compact can't fit, the file is not saved; a structural-overflow report is printed instead. No warnings-and-shrug.
-- **PROTECTED_CLAUSES are inviolate** — Stop condition, scope lock, 3-attempt rule, doc references, and PROGRESS update are protected by regex at compact time.
-- **Step 9 approval gate cannot be bypassed** — Step 10 will not surface the /goal body until human approval comes back.
+- **Generated docs are Korean-first** — English-heading leak is detected in Step 7. If found, results are discarded. No half-English output.
+- **`goal-command.md` is always ≤4,000 characters** — If compact can't fit, the file is not saved; a structural-overflow report is printed instead.
+- **PROTECTED_CLAUSES are inviolate** — Stop condition, scope lock, 3-attempt rule, doc references, and PROGRESS update are protected by Korean+English OR regex.
+- **Step 9 approval gate cannot be bypassed** — Step 10 only fires after explicit human approval.
 - **Self-demonstrating** — building this skill itself is a valid goaljaby target.
 
 ---
@@ -186,6 +190,6 @@ MIT
 
 <div align="center">
 
-**Don't just start a goal. Finish it correctly.**
+**Read in Korean. Approve. The goal begins.**
 
 </div>
