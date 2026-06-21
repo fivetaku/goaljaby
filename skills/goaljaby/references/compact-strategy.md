@@ -2,7 +2,7 @@
 
 골잡이의 핵심 약속 중 하나: `goal-command.md` 본문은 **항상 4,000자 이하**다. 경고로 끝내지 않는다. 사용자에게 결정을 미루지 않는다. 컴팩트는 스킬이 직접 수행한다.
 
-**언어 정책**: `goal-command.md` 본문은 한국어 위주 + 영어 식별자. PROTECTED_CLAUSES 정규식도 한국어/영어 둘 다 매칭하도록 OR 패턴으로 구성한다.
+**언어 정책 (shared/language-policy.md)**: `goal-command.md` 본문은 `output_lang`(사용자 언어) + 영어 식별자. PROTECTED_CLAUSES 정규식은 한국어/영어 둘 다 매칭하는 OR 패턴이라 ko/en 본문은 그대로 검증되고, 그 외 언어는 각 보호절에 ko 또는 en 앵커 표현을 유지해 매칭되게 한다.
 
 ## 보호 영역 (PROTECTED_CLAUSES)
 
@@ -124,7 +124,7 @@ def verify_compact(text: str) -> list[str]:
 
 `failures`가 비어 있어야 컴팩트 통과. 비어 있지 않으면 결과 폐기 + 구조적 오버플로우 보고.
 
-**시작 검증 메모**: v0.2.x까지는 영어 명령형 동사(`Execute|Implement|Fix|Write|Migrate|Optimize`) 시작을 강제했으나, v0.3.0부터 100% 한국어 본문을 지원하기 위해 시작 동사 강제를 제거하고 `/goal ` 다음에 condition이 있는지만 검증한다. 종료 판정은 small fast model(기본 Haiku)이 한국어 condition도 처리한다.
+**시작 검증 메모**: v0.2.x까지는 영어 명령형 동사(`Execute|Implement|Fix|Write|Migrate|Optimize`) 시작을 강제했으나, v0.3.0부터 비영어 본문(한국어 등 `output_lang`)을 지원하기 위해 시작 동사 강제를 제거하고 `/goal ` 다음에 condition이 있는지만 검증한다. 종료 판정은 small fast model(기본 Haiku)이 비영어 condition도 처리한다.
 
 ## 구조적 오버플로우 보고 (모든 컴팩트 실패 시)
 
