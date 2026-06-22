@@ -1,6 +1,6 @@
 {
   "name": "goaljaby",
-  "version": "0.5.2",
+  "version": "0.5.3",
   "description": "Bridge skill from PRD to /goal for Claude Code — auto-generates 5 review docs (VALIDATION/RECOVERY/PLAN/PROGRESS/goal-command) in the user's language (auto-detected; ko/en first-class with deterministic heading validation) with 4,000-character compact and Korean+English OR protected-clause regex enforcement. Step 8 shows a review summary directly in chat and prepends a 4-line summary to PROGRESS.md (no separate brief file). After a mandatory human approval gate, the assistant emits /goal on the last line of its reply so the session starts the goal on the next turn.",
   "author": {
     "name": "fivetaku",
