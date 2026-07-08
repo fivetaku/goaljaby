@@ -27,6 +27,7 @@ PRD 디렉토리를 받아 `output_lang`(사용자 언어) 검토 문서 5종(VA
 ## 실행
 
 1. `skills/goaljaby/SKILL.md`의 워크플로우 10단계를 순서대로 실행한다.
+   - PRD 디렉토리에 `references/`(디자인 레퍼런스, show-me-the-prd v0.10+)가 있으면 Step 1에서 감지해 Step 5에서 PLAN/VALIDATION에 승계한다. 없으면 아무 변화 없음 — 재수집하지 않는다.
 2. Step 2 (Claude Code 운영 컨텍스트 자동 확정) → Step 3 작업 유형·검증 방식·엄격도 → Step 4 마일스톤 확정까지 인터뷰 진행.
 3. Step 5에서 `output_lang`으로 5개 파일 생성(§헤딩 맵 적용), Step 6에서 4,000자 자동 컴팩트, Step 7 자체 검증 (PROTECTED_CLAUSES 한·영 OR 정규식 + 교차 언어 헤딩 잔존 검사).
 4. Step 8에서 `output_lang` 검토 요약을 대화창에 표시 + PROGRESS.md 상단에 4줄 요약 prepend (별도 파일 X).
