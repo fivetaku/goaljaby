@@ -14,7 +14,7 @@ description: This skill should be used when the user asks to "/goaljaby", "골�
 
 PRD가 "무엇을 만들지"라면, `/goal`은 "어떻게 끝났음을 증명하고 실패에서 어떻게 돌아올지"의 운영 계약이다. 두 단계 사이의 빈 구간(VALIDATION/RECOVERY/PLAN 작성 + 4,000자 컴팩트 + 사용자 언어 검토 + 골 시작)을 매번 손으로 채우는 대신 자동화한다.
 
-## 언어 정책 (shared/language-policy.md 상속)
+## 언어 정책 (references/policy-excerpt.md 상속)
 
 > **출력 언어 = 사용자 요청 언어(`output_lang`)**. 본문을 읽기 전에 §1 자동 감지로 잠근다:
 > 요청 텍스트의 언어 → 없으면 직전 대화 언어 → 둘 다 없으면(빈 호출) 영어. **한국 제작이라고 한국어를 기본값으로 두지 말 것.**
@@ -56,7 +56,7 @@ PRD가 없으면 `/show-me-the-prd`로 위임한다 (Step 0).
 
 ## 워크플로우 (10단계)
 
-> **언어 잠금 (먼저)**: 워크플로우 시작 전 `shared/language-policy.md §1`로 `output_lang`을 감지·고정한다. 이후 모든 산출물(5종 문서·헤딩·대화 요약·Step 10 응답)은 `output_lang`을 따른다. 식별자/슬롯/PROTECTED_CLAUSES 앵커는 제외(§2).
+> **언어 잠금 (먼저)**: 워크플로우 시작 전 `references/policy-excerpt.md §1`로 `output_lang`을 감지·고정한다. 이후 모든 산출물(5종 문서·헤딩·대화 요약·Step 10 응답)은 `output_lang`을 따른다. 식별자/슬롯/PROTECTED_CLAUSES 앵커는 제외(§2).
 
 ### Step 0: PRD 사전 확인 + 입력 분기
 **타입**: Bash + AskUserQuestion (조건부)
@@ -120,6 +120,11 @@ PRD acceptance criteria를 그룹화하여 마일스톤 초안 생성. ≤5개 �
 - `VALIDATION.md` 시각 검증(또는 수동 확인 절차)에 "UI 산출물이 `PRD/references/`의 레퍼런스 스타일 방향({스타일 키워드})과 부합하는가 — 구현 전 이미지를 Read로 열어 방향 확인" 항목 1개 추가.
 - 저작권 가드 1줄 승계: "레퍼런스 이미지는 방향 참고 전용 — 산출물에 복사/재게시 금지."
 - goal-command.md 본문에는 넣지 않는다(4,000자 예산 보호) — 골 세션은 PLAN/VALIDATION을 읽으므로 그쪽에서 전달된다.
+
+**멀티에이전트 게이트 승계 (kkirikkiri 설치 시에만 — v0.6.2)**:
+`~/.claude/plugins/cache/*/kkirikkiri/*/scripts/wf-lint.js`가 존재하면(Glob 1회) RECOVERY.md의 기본 원칙에 다음 1항목을 추가한다 — 골 세션이 스스로 팀·워크플로를 만들 때도 같은 규율을 받게 하는 결선이다:
+- "골 작업 중 서브에이전트 팬아웃·Workflow를 사용할 때는 kkirikkiri 게이트를 따른다: Workflow 스크립트는 발사 전 `node <kkirikkiri>/scripts/wf-lint.js <script>` 통과 필수, 팀원 정의에는 경계 블록(tools·write_scope·stop·effort) 명시, 검증 역할은 read-only."
+**kkirikkiri가 없으면 이 항목을 조용히 건너뛴다** — 경고·설치 권유 없이 무동작 (graceful fallback, 미설치 환경을 깨지 않는다).
 
 ### Step 6: goal-command.md 4,000자 자동 컴팩트
 **타입**: prompt + Bash
@@ -269,6 +274,7 @@ LLM 인지에만 의존하지 않는다. Bash 도구로 결정론적 검증한�
 - **`references/task-type-classifier.md`** — 한/영 키워드 기반 작업 유형 추정 규칙
 - **`references/task-type-templates.md`** — 작업 유형 6종 × 5개 파일 강조 항목 (`output_lang` additions)
 - **`references/compact-strategy.md`** — 4,000자 자동 컴팩트 5단계 + 한·영 OR PROTECTED_CLAUSES 정규식
+- **`references/policy-excerpt.md`** — 번들 정책 발췌 (언어 §1·§2·§3·§5, 질문 §1·§2a·§2c)
 
 ## 동작 메커니즘
 
