@@ -1,6 +1,11 @@
 # Changelog
 
 
+## 0.6.2 (2026-08-30)
+
+- **kkirikkiri 멀티에이전트 게이트 승계**: kkirikkiri(v0.23.0+) 설치 시 Step 5에서 RECOVERY.md에 게이트 규율 1항목 주입 — 골 세션이 팀·워크플로를 쓸 때 wf-lint 통과·경계 블록·read-only 검증자를 따르게 함. 미설치 환경은 조용히 건너뜀(무동작)
+
+
 ## 0.6.1 — 2026-08-24
 
 - **Fix: first-run setup could wipe `settings.json`** — if the file was corrupted or contained comments (JSONC), the shared update-notifier installer re-wrote it as an empty object plus the hook, silently destroying all user settings. It now refuses to write when parsing fails and writes atomically (tmp + rename). Marketplace-wide propagation of the fix found in the ddiring v0.1.1 external review; reproduction-verified.
