@@ -1,6 +1,13 @@
 # Changelog
 
 
+## 0.6.3 (2026-09-04)
+
+- README(en/ko) 정합화: "한국어 우선/Korean-first" 서술을 실제 `output_lang` 정책(요청 언어 자동 감지, ko/en 1급)으로 교정 — SKILL.md·plugin.json과 모순되던 7곳 수정
+- README에 승계 기능 문단 추가: 디자인 레퍼런스(v0.6.0) + kkirikkiri 게이트 규율(v0.6.2) — 코드에는 있었으나 미기재
+- (kkirikkiri E2E 감사 확정 발견 반영)
+
+
 ## 0.6.2 (2026-08-30)
 
 - **kkirikkiri 멀티에이전트 게이트 승계**: kkirikkiri(v0.23.0+) 설치 시 Step 5에서 RECOVERY.md에 게이트 규율 1항목 주입 — 골 세션이 팀·워크플로를 쓸 때 wf-lint 통과·경계 블록·read-only 검증자를 따르게 함. 미설치 환경은 조용히 건너뜀(무동작)
