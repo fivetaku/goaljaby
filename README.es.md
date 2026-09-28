@@ -6,9 +6,9 @@
   <img src="assets/goaljaby-hero-01.png" alt="goaljaby" width="320">
 </p>
 
-> **Puente PRD→/goal para Claude Code — documentos de revisión en coreano y, tras tu aprobación, el goal arranca de inmediato.**
+> **Puente PRD→/goal para Claude Code — documentos de revisión en tu idioma y, tras tu aprobación, el goal arranca de inmediato.**
 
-goaljaby toma una carpeta de PRD (manual o generada por `/show-me-the-prd`) y produce automáticamente cinco documentos de revisión en coreano que envuelven un ciclo de verificación/recuperación — VALIDATION, RECOVERY, PLAN, PROGRESS y el cuerpo del comando `/goal`. El resumen de revisión en coreano se muestra directamente en el chat (sin archivos extra), y se antepone un resumen de 4 líneas a PROGRESS.md para el traspaso. Lees en coreano, apruebas una vez, y el goal comienza en el siguiente turno — el asistente emite la línea `/goal` por ti.
+goaljaby toma una carpeta de PRD (manual o generada por `/show-me-the-prd`) y produce automáticamente cinco documentos de revisión **en tu idioma** (detectado automáticamente a partir de tu petición; el coreano y el inglés tienen soporte de primera clase con validación determinista de encabezados, los demás idiomas son best-effort) que envuelven un ciclo de verificación/recuperación — VALIDATION, RECOVERY, PLAN, PROGRESS y el cuerpo del comando `/goal`. El resumen de revisión se muestra directamente en el chat (sin archivos extra), y se antepone un resumen de 4 líneas a PROGRESS.md para el traspaso. Lees en tu propio idioma, apruebas una vez, y el goal comienza en el siguiente turno — el asistente emite la línea `/goal` por ti.
 
 [Inicio rápido](#inicio-rápido) • [¿Por qué goaljaby?](#por-qué-goaljaby) • [Cómo funciona](#cómo-funciona) • [Archivos generados](#archivos-generados) • [Tipos de tarea](#tipos-de-tarea) • [Comandos](#comandos) • [Requisitos](#requisitos)
 
@@ -56,11 +56,11 @@ O simplemente dilo con naturalidad:
 ## ¿Por qué goaljaby?
 
 - **Un PRD por sí solo no basta** — Un PRD dice *qué* construir. `/goal` exige además *cómo demostrar que está terminado* y *cómo recuperarse cuando algo sale mal*. Si falta cualquiera de los dos, el goal se queda en "parece plausible" o se desvía del alcance.
-- **Revisión en coreano, no plantillas en inglés** — Los documentos generados son coreano-primero, para que el usuario realmente los lea y revise antes de aprobar. Encabezados como 필수 검증, 완료 기준 매핑, 완료로 보지 않는 조건 — no sus equivalentes en inglés.
-- **El resumen de revisión vive en el chat** — Sin archivo brief adicional. El Step 8 muestra un resumen de revisión en coreano directamente en el chat y antepone un resumen de 4 líneas a PROGRESS.md para que el traspaso siga funcionando.
-- **Apruebas una vez y el trabajo empieza** — Tras tu aprobación, el asistente emite `/goal {cuerpo}` en la última línea de su respuesta y la sesión inicia el goal en el siguiente turno. Lees el resumen en coreano, apruebas, y el trabajo comienza.
+- **Revisión en tu idioma, no plantillas en un idioma ajeno** — El idioma de salida sigue a tu petición (`output_lang`), nunca un valor por defecto fijo: quien escribe en coreano recibe 필수 검증 / 완료 기준 매핑, quien escribe en inglés recibe Required Checks / Acceptance Criteria Mapping. Una revisión que no puedes leer vacía de sentido la puerta de aprobación, así que los documentos se generan en el idioma que de verdad vas a leer.
+- **El resumen de revisión vive en el chat** — Sin archivo brief adicional. El Step 8 muestra el resumen de revisión directamente en el chat y antepone un resumen de 4 líneas a PROGRESS.md para que el traspaso siga funcionando.
+- **Apruebas una vez y el trabajo empieza** — Tras tu aprobación, el asistente emite `/goal {cuerpo}` en la última línea de su respuesta y la sesión inicia el goal en el siguiente turno. Lees el resumen de revisión, apruebas, y el trabajo comienza.
 - **La compactación a 4.000 caracteres se impone, no se avisa** — El `/goal` de Claude Code tiene un techo de 4.000 caracteres. goaljaby aplica una compactación en 5 etapas y, si aun así no cabe, aborta limpiamente con un informe de desbordamiento estructural. Sin truncados silenciosos.
-- **Las PROTECTED_CLAUSES son irrecortables** — Condición de parada, bloqueo de alcance, regla de 3 intentos, directiva de lectura de documentos y actualización de PROGRESS se verifican con regex OR coreano+inglés tras la compactación. Si falta alguna cláusula, el resultado se descarta.
+- **Las PROTECTED_CLAUSES son irrecortables** — Condición de parada, bloqueo de alcance, regla de 3 intentos, directiva de lectura de documentos y actualización de PROGRESS se verifican con regex OR coreano+inglés tras la compactación (los encabezados se cruzan ko↔en; los demás idiomas recurren a comprobar la presencia de las claves de sección). Si falta alguna cláusula, el resultado se descarta.
 - **Puerta de aprobación humana obligatoria** — El AskUserQuestion del Step 9 no se puede saltar. El goal solo arranca tras tu aprobación explícita.
 
 ---
@@ -78,7 +78,7 @@ Directorio de PRD
 [Step 2-4] Entrevista (1-2 rondas)
      │   task_type, métodos de validación, rigor, hitos
      ▼
-[Step 5] Rellena los 5 documentos en coreano
+[Step 5] Rellena los 5 documentos en output_lang (+ hereda referencias de diseño / puertas de kkirikkiri si existen)
      │   VALIDATION / RECOVERY / PLAN / PROGRESS / goal-command
      ▼
 [Step 6] Compacta goal-command.md a ≤4.000 caracteres
@@ -89,7 +89,7 @@ Directorio de PRD
      │   + recuento de caracteres + detección de encabezados en inglés
      │   Si falla → informe de desbordamiento estructural + DESCARTE
      ▼
-[Step 8] Muestra el resumen de revisión en coreano en el chat
+[Step 8] Muestra el resumen de revisión en el chat (output_lang)
      │   + antepone un resumen de 4 líneas a PROGRESS.md (traspaso)
      ▼
 [Step 9] AskUserQuestion — aprobar / revisar / más tarde / cancelar
@@ -110,10 +110,12 @@ Directorio de PRD
 ├── RECOVERY.md        ← 기본 원칙 / 실패 루프 / 재시도 한계 / scope 잠금
 ├── PLAN.md            ← 목표 / 마일스톤(≤5) / 최종 완료 기준
 ├── PROGRESS.md        ← 빈 초기 템플릿 + Step 8 4-line summary prepended
-└── goal-command.md    ← /goal 본문 (한국어, ≤4,000 chars)
+└── goal-command.md    ← /goal 본문 (output_lang, ≤4,000 chars)
 ```
 
-Los cinco son coreano-primero. El resumen de revisión del Step 8 se muestra solo en el chat (sin archivo extra). Los nombres de archivo, los identificadores de comandos y los comandos de shell se mantienen tal cual.
+Los cinco se generan en `output_lang` (el idioma de tu petición; los encabezados ko/en se validan de forma determinista). El resumen de revisión del Step 8 se muestra solo en el chat (sin archivo extra).
+
+**Contexto heredado (v0.6.0+ / v0.6.2+)**: si la carpeta del PRD incluye `references/` + `sources.json` de `/show-me-the-prd` v0.10+, las palabras clave de estilo y las imágenes conservadas se heredan en PLAN.md/VALIDATION.md (con una salvaguarda de copyright). Si kkirikkiri v0.23+ está instalado, RECOVERY.md también recibe la regla de puertas multiagente (wf-lint antes de Workflow, bloques de límites para los teammates, revisores de solo lectura) — se omite en silencio cuando kkirikkiri no está. Los nombres de archivo, los identificadores de comandos y los comandos de shell se mantienen tal cual.
 
 ---
 
@@ -134,7 +136,7 @@ El tipo de tarea se estima automáticamente a partir del contenido del PRD (coin
 
 ## Promesas clave
 
-- **Los documentos generados son coreano-primero** — El Step 7 detecta encabezados en inglés que se hayan colado. Si aparecen, el resultado se descarta. Nada de salidas a medio traducir.
+- **Los documentos generados son de un solo idioma** — El Step 7 cruza los encabezados (ko↔en): una ejecución en coreano con encabezados en inglés sobrantes, o una en inglés con encabezados en coreano sobrantes, se descarta. Nada de salidas a medio traducir.
 - **El resumen de revisión se queda en el chat** — Sin archivo brief separado. PROGRESS.md recibe un resumen de 4 líneas en la parte superior para el traspaso.
 - **`goal-command.md` siempre tiene ≤4.000 caracteres** — Si la compactación no lo consigue, el archivo no se guarda; se imprime un informe de desbordamiento estructural en su lugar.
 - **Las PROTECTED_CLAUSES son inviolables** — Condición de parada, bloqueo de alcance, regla de 3 intentos, referencias a documentos y actualización de PROGRESS quedan protegidas por regex OR coreano+inglés.
@@ -191,6 +193,6 @@ MIT
 
 <div align="center">
 
-**Lee en coreano. Aprueba. El goal comienza.**
+**Lee en tu idioma. Aprueba. El goal comienza.**
 
 </div>

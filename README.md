@@ -193,6 +193,6 @@ MIT
 
 <div align="center">
 
-**Read in Korean. Approve. The goal begins.**
+**Read in your language. Approve. The goal begins.**
 
 </div>
