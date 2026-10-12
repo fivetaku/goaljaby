@@ -67,6 +67,10 @@ PROTECTED_CLAUSES P2·P3는 한 줄 안에 압축되어 정규식 매칭이 유�
 
 자체 검증: 본문 어디서도 정의 안 된 약어가 등장하지 않는지 확인.
 
+**치환 예외 (v0.7.0)**: 다음 두 문장 안의 파일명은 약어로 바꾸지 않는다 — 정규식 검사가 원래 파일명을 찾기 때문이다.
+- P5 문장의 `PROGRESS.md` ("… PROGRESS.md를 업데이트한다" / "Update PROGRESS.md …"). 바꾸면 P5 정규식이 매칭되지 않아 컴팩트가 실패한다(v0.6.x까지의 잠복 충돌).
+- 작업 상태 규칙 문장의 `PLAN.md` ("작업을 시작하면 PLAN.md의 해당 줄을 `[>]` …"). `TASK_STATUS_RULE` 검사 대상이다.
+
 ### 단계 4: 마일스톤 요약
 
 원본:
@@ -120,9 +124,24 @@ def verify_compact(text: str) -> list[str]:
         if abbr not in standard and abbr not in abbreviations_defined:
             failures.append(f"undefined abbreviation: {abbr}.md")
     return failures
+
+
+# v0.7.0 — 생성된 PLAN.md에 작업 체크리스트가 있을 때만 적용 (P1~P5와 별개)
+def verify_task_rule(text: str, plan_has_tasks: bool) -> list[str]:
+    if not plan_has_tasks:
+        return []
+    failures = []
+    if not re.search(r"PLAN\.md", text):
+        failures.append("TASK_STATUS_RULE: PLAN.md not mentioned")
+    for marker in ("[>]", "[x]", "[!]"):
+        if marker not in text:
+            failures.append(f"TASK_STATUS_RULE: marker {marker} missing")
+    return failures
 ```
 
-`failures`가 비어 있어야 컴팩트 통과. 비어 있지 않으면 결과 폐기 + 구조적 오버플로우 보고.
+`TASK_STATUS_RULE`이 실패하면 템플릿의 작업 상태 규칙 문장(약 90자)을 P5 문장 바로 앞에 다시 넣고 재검증한다. 그래도 4,000자를 넘으면 구조적 오버플로우로 처리한다.
+
+`verify_compact`와 `verify_task_rule`의 `failures`가 모두 비어 있어야 컴팩트 통과. 비어 있지 않으면 결과 폐기 + 구조적 오버플로우 보고.
 
 **시작 검증 메모**: v0.2.x까지는 영어 명령형 동사(`Execute|Implement|Fix|Write|Migrate|Optimize`) 시작을 강제했으나, v0.3.0부터 비영어 본문(한국어 등 `output_lang`)을 지원하기 위해 시작 동사 강제를 제거하고 `/goal ` 다음에 condition이 있는지만 검증한다. 종료 판정은 small fast model(기본 Haiku)이 비영어 condition도 처리한다.
 

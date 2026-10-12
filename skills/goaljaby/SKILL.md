@@ -42,7 +42,7 @@ PRD가 없으면 `/show-me-the-prd`로 위임한다 (Step 0).
 [output_dir]/
 ├── VALIDATION.md      — 필수 검증 / 마일스톤별 검증 / 완료 기준 매핑 / 완료로 보지 않는 조건
 ├── RECOVERY.md        — 기본 원칙 / 실패 루프 / 재시도 한계 / scope 잠금 / 방향 재확인 / 되돌리기 규칙
-├── PLAN.md            — 목표 / 참조 문서 / 마일스톤(≤5) / 최종 완료 기준
+├── PLAN.md            — 목표 / 참조 문서 / 마일스톤(≤5, 마일스톤별 작업 체크리스트) / 최종 완료 기준
 ├── PROGRESS.md        — 빈 초기 템플릿 + Step 8에서 상단에 4줄 요약 prepend됨
 └── goal-command.md    — `/goal` 실행 본문 (`output_lang`, 4,000자 강제)
 ```
@@ -116,6 +116,8 @@ PRD acceptance criteria를 그룹화하여 마일스톤 초안 생성. ≤5개 �
 
 치환 시 빈 슬롯(`{...}`)이 잔존하지 않도록 확인. 빈 슬롯이 남으면 해당 줄 자체 제거.
 
+**작업 체크리스트 (v0.7.0)**: 새로 만드는 PLAN.md의 각 마일스톤에 `- [ ] M{N}-T{K}: 작업` 행을 2~6개 만든다(규칙은 `templates.md` `{MILESTONE_TASK_ROWS}`). `[ ]` 대기 · `[>]` 진행 · `[x]` 완료 · `[!]` 사람 판단·외부 입력 대기. 범위·완료 조건·검증 문장은 그대로 두고 생성 시에만 작업을 나눈다. **이어가기 분기나 사람이 쓴 기존 PLAN은 다시 쓰지 않는다.**
+
 **가정 원장 승계 (Step 1에서 감지된 경우에만)**:
 - `PLAN.md` 참조 문서 목록에 원장 위치를 남기고, 기존 항목 식별자가 있으면 그대로 사용한다.
 - 결과에 영향을 주는 미확정 가정은 `VALIDATION.md`의 해당 완료 기준에 확인 방법을 연결한다. 지금 확인할 수 없으면 미검증으로 남기며 통과로 처리하지 않는다.
@@ -157,6 +159,7 @@ LLM 인지에만 의존하지 않는다. Bash 도구로 결정론적 검증한�
 2. **PROTECTED_CLAUSES 5종 한·영 OR 정규식 매칭**: `compact-strategy.md` §보호 영역의 5개 정규식을 `grep -P` 또는 Python으로 매칭. 5개 모두 hit 필수.
 3. **`/goal ` 시작 검증**: `grep -cE '^/goal ' goal-command.md` 결과가 1 이상.
 4. **약어 치환 후 미정의 약어 없음**: 본문에서 `\b[A-Z]+\.md\b` 패턴 추출 후 표준 약어(VALIDATION/RECOVERY/PLAN/PROGRESS/PRD/SDD)와 본문 상단 `[약어]` 범례 정의 외에 등장하는지 확인.
+4-1. **작업 상태 규칙 (v0.7.0)**: 새 PLAN.md는 마일스톤마다 `^- \[ \] M\d+[a-z]?-T\d+:` 행이 1개 이상이고 작업 ID 중복이 없어야 한다. goal-command.md는 `compact-strategy.md`의 `verify_task_rule`(PLAN.md 언급 + `[>]`·`[x]`·`[!]` 마커)을 통과해야 한다. 체크리스트가 없는 기존 PLAN(이어가기 분기)은 이 검사를 건너뛴다.
 5. **acceptance 매핑 누락 없음**: VALIDATION.md의 `## 완료 기준 매핑` 테이블 행 수가 PRD acceptance criterion 수 이상인지 확인.
 6. **헤딩 언어 일관성 검사 (`output_lang` 기준)**: 생성 문서 헤딩이 모두 감지 언어여야 한다 — 교차 언어 헤딩 0건.
    - `output_lang = ko` → 영어 헤딩 잔존 검사: `grep -nE "^## (Required Checks|Targeted Checks|Manual Verification|Acceptance Criteria Mapping|Not Done If|Core Rule|Failure Loop|Retry Limit|Scope Control|Reorientation Rule|Revert Rule|Goal|Source Documents|Final Completion Criteria|Current Goal|Current Milestone|Completed|Last Validation|Failed Attempts|Current Best State|Next Step|Risks|Handoff Notes|Visual Verification|Milestone)\b"` → 0건.
@@ -180,7 +183,7 @@ LLM 인지에만 의존하지 않는다. Bash 도구로 결정론적 검증한�
 {GOAL_ONE_LINER}
 
 ## 마일스톤 (≤5)
-1. {MILESTONE_1_NAME} — 완료 조건: {M1_COMPLETION}
+1. {MILESTONE_1_NAME} (작업 {M1_TASK_COUNT}) — 완료 조건: {M1_COMPLETION}
 2. ...
 
 ## 필수 검증 명령
@@ -299,6 +302,7 @@ LLM 인지에만 의존하지 않는다. Bash 도구로 결정론적 검증한�
 - **검토 요약은 채팅에만**: 별도 파일을 만들지 않는다. PROGRESS.md 상단에 4줄 요약을 prepend해 핸드오프 시 컨텍스트만 보존한다.
 - **경고로 끝내지 않는다**: 4,000자 초과는 항상 컴팩트로 해결. 못 맞추면 결과물 저장 안 함.
 - **PROTECTED_CLAUSES는 불가침**: 5종은 어떤 컴팩트 단계에서도 삭제하지 않는다.
+- **세부 작업의 정본은 PLAN.md 체크리스트다**: 실행 중에는 마커(`[ ]`/`[>]`/`[x]`/`[!]`)만 바뀐다. PROGRESS.md는 실행 로그이며 작업 상태를 재정의하지 않는다. 별도 progress.json은 만들지 않는다. 진행 보드가 필요하면 playmaker 플러그인이 이 두 파일을 읽어 보여 준다.
 - **Claude Code 전용**: `target_cli = claude_code` 자동 고정. pause/resume 미지원.
 - **사람 검토 안전장치 우회 금지**: Step 9 승인 게이트 없이 Step 10이 골을 시작하지 않는다.
 - **승인 한 번으로 시작**: Step 10은 응답 마지막 줄로 `/goal`을 보내 다음 턴에서 골을 시작한다. 사용자가 본문을 따로 입력할 필요는 없다.
