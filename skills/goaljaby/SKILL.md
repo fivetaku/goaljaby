@@ -118,6 +118,8 @@ PRD acceptance criteria를 그룹화하여 마일스톤 초안 생성. ≤5개 �
 
 **작업 체크리스트 (v0.7.0)**: 새로 만드는 PLAN.md의 각 마일스톤에 `- [ ] M{N}-T{K}: 작업` 행을 2~6개 만든다(규칙은 `templates.md` `{MILESTONE_TASK_ROWS}`). `[ ]` 대기 · `[>]` 진행 · `[x]` 완료 · `[!]` 사람 판단·외부 입력 대기. 범위·완료 조건·검증 문장은 그대로 두고 생성 시에만 작업을 나눈다. **이어가기 분기나 사람이 쓴 기존 PLAN은 다시 쓰지 않는다.**
 
+**쉬운 말 (v0.7.1)**: 작업 행·마일스톤 이름·문서 본문은 PRD를 안 읽은 사람이 한 줄만 보고도 알아듣게 쓴다. PRD 내부 약칭·코드명은 풀어 쓰고, 한 줄에 주된 일 하나, "기록한다" 대신 무엇을 어디에 남기는지 쓴다. 상세 규칙과 예시는 `templates.md` §쉬운 말 규칙.
+
 **가정 원장 승계 (Step 1에서 감지된 경우에만)**:
 - `PLAN.md` 참조 문서 목록에 원장 위치를 남기고, 기존 항목 식별자가 있으면 그대로 사용한다.
 - 결과에 영향을 주는 미확정 가정은 `VALIDATION.md`의 해당 완료 기준에 확인 방법을 연결한다. 지금 확인할 수 없으면 미검증으로 남기며 통과로 처리하지 않는다.
@@ -160,6 +162,7 @@ LLM 인지에만 의존하지 않는다. Bash 도구로 결정론적 검증한�
 3. **`/goal ` 시작 검증**: `grep -cE '^/goal ' goal-command.md` 결과가 1 이상.
 4. **약어 치환 후 미정의 약어 없음**: 본문에서 `\b[A-Z]+\.md\b` 패턴 추출 후 표준 약어(VALIDATION/RECOVERY/PLAN/PROGRESS/PRD/SDD)와 본문 상단 `[약어]` 범례 정의 외에 등장하는지 확인.
 4-1. **작업 상태 규칙 (v0.7.0)**: 새 PLAN.md는 마일스톤마다 `^- \[ \] M\d+[a-z]?-T\d+:` 행이 1개 이상이고 작업 ID 중복이 없어야 한다. goal-command.md는 `compact-strategy.md`의 `verify_task_rule`(PLAN.md 언급 + `[>]`·`[x]`·`[!]` 마커)을 통과해야 한다. 체크리스트가 없는 기존 PLAN(이어가기 분기)은 이 검사를 건너뛴다.
+4-2. **쉬운 말 점검 (v0.7.1)**: 새 PLAN.md의 작업 행과 마일스톤 이름을 한 줄씩 다시 읽고, PRD에서 처음 만든 약칭·코드명이 풀이 없이 남은 줄, 조건·동작이 셋 이상 이어진 줄, 무엇을 남기는지 빠진 "기록한다"류 줄을 찾아 고쳐 쓴다. 작업 ID·순서·개수는 바꾸지 않는다. 이 점검은 고쳐 쓰기만 하며 폐기 사유가 아니다.
 5. **acceptance 매핑 누락 없음**: VALIDATION.md의 `## 완료 기준 매핑` 테이블 행 수가 PRD acceptance criterion 수 이상인지 확인.
 6. **헤딩 언어 일관성 검사 (`output_lang` 기준)**: 생성 문서 헤딩이 모두 감지 언어여야 한다 — 교차 언어 헤딩 0건.
    - `output_lang = ko` → 영어 헤딩 잔존 검사: `grep -nE "^## (Required Checks|Targeted Checks|Manual Verification|Acceptance Criteria Mapping|Not Done If|Core Rule|Failure Loop|Retry Limit|Scope Control|Reorientation Rule|Revert Rule|Goal|Source Documents|Final Completion Criteria|Current Goal|Current Milestone|Completed|Last Validation|Failed Attempts|Current Best State|Next Step|Risks|Handoff Notes|Visual Verification|Milestone)\b"` → 0건.
