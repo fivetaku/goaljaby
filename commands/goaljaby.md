@@ -32,7 +32,7 @@ PRD 디렉토리를 받아 `output_lang`(사용자 언어) 검토 문서 5종(VA
 3. Step 5에서 `output_lang`으로 5개 파일 생성(§헤딩 맵 적용), Step 6에서 4,000자 자동 컴팩트, Step 7 자체 검증 (PROTECTED_CLAUSES 한·영 OR 정규식 + 교차 언어 헤딩 잔존 검사).
 4. Step 8에서 `output_lang` 검토 요약을 대화창에 표시 + PROGRESS.md 상단에 4줄 요약 prepend (별도 파일 X).
 5. Step 9 사람 검토 게이트(AskUserQuestion): 승인 / 수정 / 나중에 / 취소.
-6. 승인 시 Step 10에서 PROGRESS.md에 시작 기록 + 응답 *마지막 줄*에 `/goal {본문 한 줄}` 출력 → 시스템이 다음 턴 입력으로 처리해 골 작업을 시작.
+6. 승인 시 Step 10에서 PROGRESS.md에 시작 기록 + 응답 *마지막 줄*에 `/goal {본문 한 줄}` 출력 → 플러그인 훅이 턴 종료 시 그 줄을 `/goal` 명령으로 실행해 골 작업을 시작(0.8.0+, 사람 재입력 불필요).
 
 ## 안전장치
 

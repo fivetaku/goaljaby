@@ -58,7 +58,7 @@ Or just say it naturally:
 - **A PRD alone isn't enough** — A PRD says *what* to build. `/goal` requires *how to prove it's done* and *how to recover when it goes wrong*. Missing either, the goal stops at "looks plausible" or drifts off-scope.
 - **Review in your language, not foreign boilerplate** — Output language follows your request (`output_lang`), never a hard-coded default: Korean users get 필수 검증 / 완료 기준 매핑, English users get Required Checks / Acceptance Criteria Mapping. A review you can't read makes the approval gate meaningless, so the docs are generated in the language you'll actually read.
 - **Review summary lives in chat** — No extra brief file. Step 8 shows the review summary directly in chat and prepends a 4-line summary to PROGRESS.md so handoff still works.
-- **Approve once, work begins** — After your approval, the assistant emits `/goal {body}` on the last line of its reply and the session starts the goal on the next turn. You read the review summary, approve, and the work begins.
+- **Approve once, work begins** — After your approval, the assistant emits `/goal {body}` on the last line of its reply and the plugin's hook runs that line as the `/goal` command the moment the turn ends (0.8.0+, no retyping). You read the review summary, approve, and the work begins.
 - **4,000-char compact is enforced, not warned** — Claude Code's `/goal` has a 4,000-character ceiling. goaljaby applies a 5-stage compact and aborts cleanly with a structural-overflow report if it still cannot fit. No silent truncation.
 - **PROTECTED_CLAUSES are uncuttable** — Stop condition, scope lock, 3-attempt rule, doc-read directive, and PROGRESS update are verified by Korean+English OR regex after compact (headings are cross-checked ko↔en; other languages fall back to section-key presence checks). If any clause is missing post-compact, the output is discarded.
 - **Mandatory human approval gate** — Step 9's AskUserQuestion is non-bypassable. The goal only starts after your explicit approval.
@@ -97,7 +97,7 @@ PRD directory
 [Step 10] On approval:
           • Record start time in PROGRESS.md
           • Emit `/goal {body}` as the last line of the reply
-          • Session starts the goal on the next turn
+          • The hook runs that line as /goal → the goal starts
 ```
 
 ---
