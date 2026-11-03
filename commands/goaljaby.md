@@ -1,6 +1,6 @@
 ---
 name: goaljaby
-description: PRD 폴더를 받아 사용자 언어로 검토 문서 5종을 자동 생성하고, 검토 요약을 대화창에 띄운 뒤 사용자 승인을 받으면 어시스턴트가 응답 마지막 줄로 /goal을 보내 다음 턴에서 골 작업을 시작한다 (Claude Code 전용).
+description: PRD 폴더를 받아 사용자 언어로 검토 문서 5종을 자동 생성하고, 검토 요약을 대화창에 띄운 뒤 사용자 승인을 받으면 어시스턴트가 응답 마지막 줄로 /goal을 보내고 플러그인 훅이 그 줄을 바로 실행해 골 작업을 시작한다(붙여넣기 없음) (Claude Code 전용).
 argument-hint: "[PRD 디렉토리 절대 경로 (예: /Users/<username>/my-project/PRD/) — 비우면 묻기]"
 ---
 
@@ -16,7 +16,7 @@ If the output is empty, just continue silently. (AskUserQuestion must NOT be in 
 
 > **언어 정책 (skills/goaljaby/references/policy-excerpt.md)**: 사용자 요청 언어(`output_lang`)로 출력한다. 한국 제작이라고 한국어를 기본값으로 두지 말 것(§1). 파일명·명령·약어 등 식별자는 번역 안 함(§2). AskUserQuestion의 question/label/description도 사용자 언어로 번역해 호출한다(§3).
 
-PRD 디렉토리를 받아 `output_lang`(사용자 언어) 검토 문서 5종(VALIDATION/RECOVERY/PLAN/PROGRESS/goal-command.md)을 생성하고, Step 8에서 `output_lang` 검토 요약을 대화창에 띄우고 PROGRESS.md 상단에 4줄 요약을 prepend한다. 사용자 검토·승인을 거쳐 응답 마지막 줄로 `/goal`을 보내 다음 턴에서 골 작업을 시작한다. 사용자가 본문을 따로 입력할 필요는 없다.
+PRD 디렉토리를 받아 `output_lang`(사용자 언어) 검토 문서 5종(VALIDATION/RECOVERY/PLAN/PROGRESS/goal-command.md)을 생성하고, Step 8에서 `output_lang` 검토 요약을 대화창에 띄우고 PROGRESS.md 상단에 4줄 요약을 prepend한다. 사용자 검토·승인을 거쳐 응답 마지막 줄로 `/goal`을 보내고, 플러그인 훅이 그 줄을 바로 실행해 골 작업을 시작한다(복사·붙여넣기 없음). 사용자가 본문을 따로 입력할 필요는 없다.
 
 ## 인수 파싱
 

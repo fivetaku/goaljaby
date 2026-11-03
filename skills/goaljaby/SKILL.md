@@ -1,6 +1,6 @@
 ---
 name: goaljaby
-description: This skill should be used when the user asks to "/goaljaby", "골잡이", "골잡이 호출", "골 셋업 만들어줘", "골 셋업해줘", "PRD에서 골 만들어줘", "PRD 골 변환", "VALIDATION RECOVERY 만들어줘", "골 실행 준비", "set up goal from PRD", "goaljaby", "prep goal docs", "make goal scaffolding". Use this whenever the user has a PRD folder and wants to bridge into a /goal-driven long-running session — generating VALIDATION/RECOVERY/PLAN/PROGRESS/goal-command.md in the user's language with a 4,000-character compact-enforced /goal command, then emitting `/goal` on the last line of the assistant reply so the session starts the goal on the next turn after human approval. Make sure to use this skill whenever the user mentions converting PRD to a goal, preparing goal scaffolding, or generating goal validation/recovery docs.
+description: This skill should be used when the user asks to "/goaljaby", "골잡이", "골잡이 호출", "골 셋업 만들어줘", "골 셋업해줘", "PRD에서 골 만들어줘", "PRD 골 변환", "VALIDATION RECOVERY 만들어줘", "골 실행 준비", "set up goal from PRD", "goaljaby", "prep goal docs", "make goal scaffolding". Use this whenever the user has a PRD folder and wants to bridge into a /goal-driven long-running session — generating VALIDATION/RECOVERY/PLAN/PROGRESS/goal-command.md in the user's language with a 4,000-character compact-enforced /goal command, then emitting `/goal` on the last line of the assistant reply and the plugin's turn.complete hook runs it right away after human approval (no copy-paste). Make sure to use this skill whenever the user mentions converting PRD to a goal, preparing goal scaffolding, or generating goal validation/recovery docs.
 ---
 
 <!-- first-run setup: idempotent, non-blocking, self-skips after first run -->
@@ -8,7 +8,7 @@ description: This skill should be used when the user asks to "/goaljaby", "골�
 
 # 골잡이 (goaljaby)
 
-> PRD를 `/goal` 운영 계약으로 변환하는 브릿지 스킬. **사용자 언어로** 검토 문서 5종을 생성하고, 검토 요약을 대화창에 띄운 뒤 승인하면 어시스턴트가 응답 마지막 줄로 `/goal`을 보내 다음 턴에서 골 작업을 시작한다.
+> PRD를 `/goal` 운영 계약으로 변환하는 브릿지 스킬. **사용자 언어로** 검토 문서 5종을 생성하고, 검토 요약을 대화창에 띄운 뒤 승인하면 어시스턴트가 응답 마지막 줄로 `/goal`을 보내고, 플러그인 훅이 그 줄을 바로 실행해 골 작업을 시작한다(복사·붙여넣기 없음).
 
 ## 이 스킬을 쓰는 이유
 
@@ -93,7 +93,7 @@ PRD 본문을 읽고 추출:
 이 스킬은 Claude Code v2.1.139+ 전용이다. CLI 분기 인터뷰는 없고 `target_cli = claude_code`로 자동 고정한다. 결과적으로:
 - RECOVERY.md는 pause/resume을 사용하지 않는다 (Claude Code는 `/goal pause` 미지원).
 - `goal-command.md`는 4,000자 강제 (공식 character 단위).
-- Step 10에서 어시스턴트가 응답 마지막 줄로 `/goal {본문}`을 보내고, 시스템이 다음 턴 입력으로 처리해 골 작업을 시작한다.
+- Step 10에서 어시스턴트가 응답 마지막 줄로 `/goal {본문}`을 보내고, 이 플러그인의 `turn.complete` 훅이 그 줄을 `/goal` 명령으로 바로 실행해 골 작업을 시작한다. 사용자에게 복사·붙여넣기를 요청하지 않는다.
 
 ### Step 3: 작업 유형 + 검증 방식 + 엄격도
 **타입**: AskUserQuestion (1~2회로 압축)
@@ -233,7 +233,7 @@ LLM 인지에만 의존하지 않는다. Bash 도구로 결정론적 검증한�
 
 질문: "위 요약을 검토하셨나요? 어떻게 진행할까요?"
 
-- **승인 — 지금 골 작업 시작** (추천): Step 10으로 이동, 응답 마지막 줄로 `/goal`을 보내 다음 턴에서 골을 시작한다.
+- **승인 — 지금 골 작업 시작** (추천): Step 10으로 이동, 응답 마지막 줄로 `/goal`을 보내면 훅이 바로 실행한다.
 - **수정 필요**: 어느 파일을 어떻게 바꿀지 자유 텍스트 입력 받기. 입력 받은 뒤 해당 파일만 재생성 후 Step 7부터 재검증.
 - **나중에 직접 실행**: 골을 시작하지 않음. `goal-command.md` 위치만 안내하고 종료.
 - **취소**: 5종 파일을 그대로 두고 종료.

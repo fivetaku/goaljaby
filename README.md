@@ -8,7 +8,7 @@ English | [한국어](README.ko.md) | [中文](README.zh.md) | [日本語](READM
 
 > **PRD-to-/goal bridge for Claude Code — review docs in your language, then the goal starts right after your approval.**
 
-goaljaby takes a PRD folder (manual or from `/show-me-the-prd`) and auto-produces five review documents **in your language** (auto-detected from your request; Korean and English are first-class with deterministic heading validation, other languages are best-effort) wrapping a verify/recover loop — VALIDATION, RECOVERY, PLAN, PROGRESS, and the `/goal` command body. The review summary is shown directly in chat (no extra file), and a 4-line summary is prepended to PROGRESS.md for handoff. You read it in your own language, approve once, and the goal starts on the next turn — the assistant emits the `/goal` line for you.
+goaljaby takes a PRD folder (manual or from `/show-me-the-prd`) and auto-produces five review documents **in your language** (auto-detected from your request; Korean and English are first-class with deterministic heading validation, other languages are best-effort) wrapping a verify/recover loop — VALIDATION, RECOVERY, PLAN, PROGRESS, and the `/goal` command body. The review summary is shown directly in chat (no extra file), and a 4-line summary is prepended to PROGRESS.md for handoff. You read it in your own language, approve once, and the goal starts right away — the assistant emits the `/goal` line and the plugin's hook runs it (no copy-paste).
 
 [Quick Start](#quick-start) • [Why goaljaby?](#why-goaljaby) • [How it works](#how-it-works) • [Outputs](#outputs) • [Task types](#task-types) • [Commands](#commands) • [Requirements](#requirements)
 
