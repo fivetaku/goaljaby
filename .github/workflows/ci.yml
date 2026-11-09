@@ -6,3 +6,6 @@ on:
 jobs:
   plugin:
     uses: fivetaku/.github/.github/workflows/plugin-check.yml@main
+    with:
+      test-command: python3 tests/verify_v070.py
+      python-packages: ""
