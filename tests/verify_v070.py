@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """goaljaby v0.7.0 회귀 검사 — compact-strategy.md의 검증 코드를 그대로 꺼내 실행한다.
 
-1. 기대 산출물 goal-command.md: P1~P5 + TASK_STATUS_RULE + 4,000자
+1. 기대 산출물 goal-command.md: P1~P5 + TASK_STATUS_RULE + 4,000자 + 조건 모양(S1~S3)·600자 (v0.9.0)
+1-1. 기대 산출물 acceptance.json: 스키마·초기값·id 중복
 2. 기대 산출물 PLAN.md: 마일스톤마다 작업 행 1개 이상, ID 중복 없음
 3. P5 약어 충돌: PROGRESS.md를 PR.md로 바꾸면 P5가 실패해야 한다(예외 규칙이 왜 필요한지 고정)
 4. 체크리스트 없는 기존 PLAN에서는 TASK_STATUS_RULE이 면제된다
@@ -18,6 +19,8 @@ code = re.search(r"## 컴팩트 후 자체 검증\s+```python\n(.*?)```", STRATE
 ns: dict = {}
 exec(code, ns)
 verify_compact, verify_task_rule = ns["verify_compact"], ns["verify_task_rule"]
+verify_condition_shape = ns["verify_condition_shape"]
+import json
 
 fails = []
 def check(name, cond, detail=""):
@@ -35,6 +38,20 @@ check("goal-command: verify_compact", not r, str(r))
 r = verify_task_rule(goal, plan_has_tasks)
 check("goal-command: verify_task_rule", not r, str(r))
 check("goal-command: 4,000자 이하", len(goal) <= 4000, str(len(goal)))
+f, w = verify_condition_shape(goal)
+check("goal-command: 조건 모양(S1 BLOCKED·S2 출력/종료 코드·S3 한 문단)", not f, str(f))
+check("goal-command: 목표 600자 이하", not w, str(w))
+check("goal-command: PRD.md 고정 이름 없음(실제 파일 01_PRD.md)", "01_PRD.md" in goal and not re.search(r"(?<![0-9_])PRD\.md", goal))
+check("BLOCKED 문장 빼면 S1 실패", any("S1" in x for x in verify_condition_shape(goal.replace("BLOCKED", "보류"))[0]))
+check("종료 코드 문구 빼면 S2 실패", any("S2" in x for x in verify_condition_shape(goal.replace("종료 코드(exit code)", "결과"))[0]))
+
+acc = json.loads((EXPECTED / "acceptance.json").read_text())
+K = {"id", "criterion", "check_command", "passes", "evidence"}
+check("acceptance.json: 배열·5키·passes false·evidence 빈칸",
+      isinstance(acc, list) and acc and all(set(x) == K and x["passes"] is False and x["evidence"] == "" for x in acc))
+check("acceptance.json: id 중복 없음", len({x["id"] for x in acc}) == len(acc))
+prd_ac = re.findall(r"^- \[ \] ", (ROOT / "tests/fixtures/settings-persistence-prd/01_PRD.md").read_text(), re.M)
+check("acceptance.json: PRD 완료 기준 수 이상", len(acc) >= len(prd_ac), f"{len(acc)} < {len(prd_ac)}")
 
 milestones = re.findall(r"^## 마일스톤 (\d+[a-z]?):", plan, re.M)
 for m in milestones:

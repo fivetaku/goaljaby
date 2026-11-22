@@ -1,0 +1,30 @@
+[
+  {
+    "id": "AC-01",
+    "criterion": "Dark mode 토글을 바꾸고 새로고침해도 같은 위치에 남는다",
+    "check_command": "npm test -- settings-persistence -t 'dark mode survives reload'",
+    "passes": false,
+    "evidence": ""
+  },
+  {
+    "id": "AC-02",
+    "criterion": "서로 다른 설정 3개를 바꾸고 새로고침해도 3개 모두 값이 유지된다",
+    "check_command": "npm test -- settings-persistence -t 'three toggles survive reload'",
+    "passes": false,
+    "evidence": ""
+  },
+  {
+    "id": "AC-03",
+    "criterion": "localStorage를 지우면 모든 토글이 기본값으로 돌아간다",
+    "check_command": "npm test -- settings-persistence -t 'cleared storage resets defaults'",
+    "passes": false,
+    "evidence": ""
+  },
+  {
+    "id": "AC-04",
+    "criterion": "사용자가 바꾼 설정 말고 다른 설정은 영향을 받지 않는다",
+    "check_command": "npm test -- settings-persistence -t 'untouched settings unchanged'",
+    "passes": false,
+    "evidence": ""
+  }
+]

@@ -1,6 +1,6 @@
 ---
 name: goaljaby
-description: This skill should be used when the user asks to "/goaljaby", "골잡이", "골잡이 호출", "골 셋업 만들어줘", "골 셋업해줘", "PRD에서 골 만들어줘", "PRD 골 변환", "VALIDATION RECOVERY 만들어줘", "골 실행 준비", "set up goal from PRD", "goaljaby", "prep goal docs", "make goal scaffolding". Use this whenever the user has a PRD folder and wants to bridge into a /goal-driven long-running session — generating VALIDATION/RECOVERY/PLAN/PROGRESS/goal-command.md in the user's language with a 4,000-character compact-enforced /goal command, then emitting `/goal` on the last line of the assistant reply and the plugin's turn.complete hook runs it right away after human approval (no copy-paste). Make sure to use this skill whenever the user mentions converting PRD to a goal, preparing goal scaffolding, or generating goal validation/recovery docs.
+description: This skill should be used when the user asks to "/goaljaby", "골잡이", "골잡이 호출", "골 셋업 만들어줘", "골 셋업해줘", "PRD에서 골 만들어줘", "PRD 골 변환", "VALIDATION RECOVERY 만들어줘", "골 실행 준비", "set up goal from PRD", "goaljaby", "prep goal docs", "make goal scaffolding". Use this whenever the user has a PRD folder and wants to bridge into a /goal-driven long-running session — generating VALIDATION/RECOVERY/PLAN/PROGRESS/goal-command.md plus acceptance.json in the user's language with a short judgeable /goal condition (target 600 characters, hard cap 4,000, BLOCKED exit), then emitting `/goal` on the last line of the assistant reply and the plugin's turn.complete hook runs it right away after human approval (no copy-paste). Make sure to use this skill whenever the user mentions converting PRD to a goal, preparing goal scaffolding, or generating goal validation/recovery docs.
 ---
 
 <!-- first-run setup: idempotent, non-blocking, self-skips after first run -->
@@ -12,7 +12,7 @@ description: This skill should be used when the user asks to "/goaljaby", "골�
 
 ## 이 스킬을 쓰는 이유
 
-PRD가 "무엇을 만들지"라면, `/goal`은 "어떻게 끝났음을 증명하고 실패에서 어떻게 돌아올지"의 운영 계약이다. 두 단계 사이의 빈 구간(VALIDATION/RECOVERY/PLAN 작성 + 4,000자 컴팩트 + 사용자 언어 검토 + 골 시작)을 매번 손으로 채우는 대신 자동화한다.
+PRD가 "무엇을 만들지"라면, `/goal`은 "어떻게 끝났음을 증명하고 실패에서 어떻게 돌아올지"의 운영 계약이다. 두 단계 사이의 빈 구간(VALIDATION/RECOVERY/PLAN 작성 + 판정 가능한 짧은 골 조건 + 사용자 언어 검토 + 골 시작)을 매번 손으로 채우는 대신 자동화한다.
 
 ## 언어 정책 (references/policy-excerpt.md 상속)
 
@@ -36,23 +36,25 @@ PRD가 없으면 `/show-me-the-prd`로 위임한다 (Step 0).
 
 ## 출력
 
-### 항상 생성되는 5개 파일 (모두 `output_lang` 본문)
+### 항상 생성되는 5개 문서 + 완료 계약 파일 (문서는 모두 `output_lang` 본문)
 
 ```
 [output_dir]/
-├── VALIDATION.md      — 필수 검증 / 마일스톤별 검증 / 완료 기준 매핑 / 완료로 보지 않는 조건
-├── RECOVERY.md        — 기본 원칙 / 실패 루프 / 재시도 한계 / scope 잠금 / 방향 재확인 / 되돌리기 규칙
+├── VALIDATION.md      — 필수 검증 표(명령·기대 결과·마지막 실행 결과·실행 시각) / 마일스톤별 검증 / 사람 확인 항목 / 완료 기준 매핑 / 완료 계약 / 완료로 보지 않는 조건
+├── RECOVERY.md        — 기본 원칙 / 실패 루프 / 재시도 한계와 BLOCKED 종료 / git 체크포인트 / 컴팩션 뒤 재개 / scope 잠금 / 방향 재확인 / 되돌리기 규칙
 ├── PLAN.md            — 목표 / 참조 문서 / 마일스톤(≤5, 마일스톤별 목적 한 줄 + 작업 체크리스트) / 최종 완료 기준
-├── PROGRESS.md        — 빈 초기 템플릿 + Step 8에서 상단에 4줄 요약 prepend됨
-└── goal-command.md    — `/goal` 실행 본문 (`output_lang`, 4,000자 강제)
+├── PROGRESS.md        — 재개 순서(고정) + 빈 실행 로그(체크포인트 커밋·결정 기록 포함), Step 8에서 재개 순서 아래 4줄 요약 삽입
+├── goal-command.md    — `/goal` 실행 본문 (`output_lang`, 한 문단, 목표 600자·상한 4,000자)
+└── acceptance.json    — 완료 기준 계약 [{id, criterion, check_command, passes:false, evidence:""}]
 ```
 
 검토 요약은 **별도 파일로 만들지 않는다**. Step 8에서 대화창에 직접 표시하고, 핸드오프 용도로 PROGRESS.md 상단에만 4줄 요약을 prepend한다.
 
 **보장사항**:
-- `goal-command.md` 본문은 항상 4,000자 이하 (문자 수 기준, byte 아님).
+- `goal-command.md` 본문은 판정 가능한 한 문단이다: 끝난 상태 + 검증 출력·종료 코드를 대화에 보이는 규칙 + 제약 + `BLOCKED` 출구. 목표 600자 이하, 상한 4,000자 (문자 수 기준, byte 아님). `/goal` 판정 모델은 조건과 대화만 보고 파일을 읽거나 명령을 실행하지 않기 때문이다.
+- `acceptance.json`은 유효한 JSON이고, 골은 검증을 실제로 돌린 뒤에만 `passes`·`evidence`를 바꾼다.
 - 5종 검토 문서는 모두 `output_lang` 헤딩 + 본문. 감지 언어와 다른 언어의 헤딩이 잔존하면 Step 7 검증에서 실패 → 결과물 폐기 (ko↔en 교차 검증, 그 외 언어는 섹션 존재 검사).
-- PROTECTED_CLAUSES 5종은 한국어/영어 OR 정규식으로 검증 (`compact-strategy.md` 참조).
+- PROTECTED_CLAUSES 5종과 추가 검사(BLOCKED 출구·출력/종료 코드 증거·한 문단)는 한국어/영어 OR 정규식으로 검증 (`compact-strategy.md` 참조).
 
 ## 워크플로우 (10단계)
 
@@ -65,7 +67,7 @@ PRD 디렉토리 인수와 내용을 확인한다.
 
 **0-A) 인수 있음 + 디렉토리 존재 + `.md` 1개 이상**
 - Bash로 acceptance criteria 패턴(`- [ ]`, "Acceptance Criteria", "완료 판정", "completion criteria") 확인. 없으면 Step 1에서 경고하지만 진행은 계속한다.
-- 기존 산출물(VALIDATION.md / RECOVERY.md / PLAN.md / PROGRESS.md / goal-command.md 중 하나라도) 존재 시 AskUserQuestion: 덮어쓰기 / 이어가기(기존 PROGRESS.md 읽고 골 재실행만 안내) / 취소.
+- 기존 산출물(VALIDATION.md / RECOVERY.md / PLAN.md / PROGRESS.md / goal-command.md / acceptance.json 중 하나라도) 존재 시 AskUserQuestion: 덮어쓰기 / 이어가기(기존 PROGRESS.md 읽고 골 재실행만 안내) / 취소.
 - → Step 1 진입.
 
 **0-B) 인수 없음 OR 디렉토리 없음 OR `.md` 0개**
@@ -73,13 +75,14 @@ PRD 디렉토리 인수와 내용을 확인한다.
 AskUserQuestion: "PRD가 아직 없네요. 어떻게 시작할까요?"
 - `/show-me-the-prd`로 지금 만든다 (추천) — Skill 도구로 `show-me-the-prd:show-me-the-prd` 위임. PRD 폴더 생성 후 골잡이가 그 경로로 0-A 재진입.
 - 수동 작성한 PRD 폴더 경로를 알려준다 — 경로 받아 0-A 재진입.
-- PRD 없이 한 줄 목표만 입력하고 진행 — 임시 PRD.md 생성 (한 문장 goal + 자동 추출 1~2 acceptance), `light` 엄격도 + 마일스톤 1개 강제.
+- PRD 없이 한 줄 목표만 입력하고 진행 — 임시 PRD.md 생성(`{PRD_FILE}` = `PRD.md`) (한 문장 goal + 자동 추출 1~2 acceptance), `light` 엄격도 + 마일스톤 1개 강제.
 - 취소.
 
 ### Step 1: PRD 분석
 **타입**: prompt + Bash
 
 PRD 본문을 읽고 추출:
+- **메인 PRD 파일 이름 `{PRD_FILE}`**: acceptance criteria가 든 실제 파일(예: `01_PRD.md`). 템플릿의 PRD 참조는 모두 이 이름으로 채운다 — `PRD.md`를 가정하지 않는다.
 - acceptance criteria (없으면 사용자에게 경고)
 - non-goals
 - open questions
@@ -92,7 +95,8 @@ PRD 본문을 읽고 추출:
 
 이 스킬은 Claude Code v2.1.139+ 전용이다. CLI 분기 인터뷰는 없고 `target_cli = claude_code`로 자동 고정한다. 결과적으로:
 - RECOVERY.md는 pause/resume을 사용하지 않는다 (Claude Code는 `/goal pause` 미지원).
-- `goal-command.md`는 4,000자 강제 (공식 character 단위).
+- `goal-command.md`는 판정 가능한 한 문단(목표 600자, 공식 상한 4,000자 character 단위).
+- RECOVERY.md는 "사람을 기다린다" 대신 `BLOCKED` 종료(PROGRESS.md에 기록 후 멈춤)를 쓴다 — 기다리는 동안 판정이 계속 "아직"이라 맴돌기 때문.
 - Step 10에서 어시스턴트가 응답 마지막 줄로 `/goal {본문}`을 보내고, 이 플러그인의 `turn.complete` 훅이 그 줄을 `/goal` 명령으로 바로 실행해 골 작업을 시작한다. 사용자에게 복사·붙여넣기를 요청하지 않는다.
 
 ### Step 3: 작업 유형 + 검증 방식 + 엄격도
@@ -100,6 +104,7 @@ PRD 본문을 읽고 추출:
 
 - 작업 유형 6종: 기능 구현 / 버그 수정 / UI 구현 / 문서 집필 / 마이그레이션 / eval 개선
 - 자동 검증 방식 (multiSelect): 단위 테스트 / 빌드 / 수동 재현 / 스크린샷 / 섹션 자가 검토 / eval 스코어 / 통합 / 패리티
+  - 골은 사람 없이 돈다. "수동 재현"·"섹션 자가 검토"처럼 사람이 하는 방식은 필수 검증이 될 수 없다 — Step 5에서 명령으로 바꾸거나(재현 테스트, 섹션·링크 검사 스크립트) VALIDATION.md `사람 확인 항목`(`[!]`, 완료를 막지 않음)으로 옮긴다(`templates.md` §B).
 - 엄격도: 표준(추천) / 엄격 / 가벼움
 
 ### Step 4: 마일스톤 추출 + 사용자 확정
@@ -109,12 +114,16 @@ PRD acceptance criteria를 그룹화하여 마일스톤 초안 생성. ≤5개 �
 
 사용자에게 마일스톤 목록을 preview로 보여주고 확정.
 
-### Step 5: 5개 파일 슬롯 채움
+### Step 5: 5개 문서 + acceptance.json 슬롯 채움
 **타입**: rag + generate
 
-`references/templates.md`의 5개 템플릿을 PRD 내용에 맞춰 슬롯 치환하고, **모든 헤딩·본문을 `output_lang`으로 렌더링**한다(템플릿은 한국어로 표기돼 있으니 §헤딩 맵으로 옮긴다). 작업 유형에 따라 강조 항목이 달라진다 — 매핑 표는 `references/task-type-templates.md` 참조.
+`references/templates.md`의 5개 템플릿과 §G `acceptance.json`을 PRD 내용에 맞춰 슬롯 치환하고, **모든 헤딩·본문을 `output_lang`으로 렌더링**한다(템플릿은 한국어로 표기돼 있으니 §헤딩 맵으로 옮긴다). 작업 유형에 따라 강조 항목이 달라진다 — 매핑 표는 `references/task-type-templates.md` 참조.
 
 치환 시 빈 슬롯(`{...}`)이 잔존하지 않도록 확인. 빈 슬롯이 남으면 해당 줄 자체 제거.
+
+**완료 계약 (v0.9.0)**: 같은 폴더에 `acceptance.json`을 만든다. 명령으로 확인할 수 있는 PRD 완료 기준마다 `{id, criterion, check_command, passes: false, evidence: ""}` 한 항목. id는 VALIDATION.md 완료 기준 매핑 표와 1:1. 명령으로 확인할 수 없는 기준은 넣지 않고 `사람 확인 항목`으로 보낸다. 상태 정본은 둘로 나뉜다 — 작업 상태는 PLAN.md 마커, 완료 기준 통과 여부는 `acceptance.json`.
+
+**골 조건 (v0.9.0)**: goal-command.md는 `templates.md` §F 뼈대로 한 문단을 만든다 — 끝난 상태(유형별) + "각 검증 명령의 실제 출력과 종료 코드(exit code)를 대화에 그대로 보인다" + 첫 행동(`{PRD_FILE}`·PLAN·VALIDATION·RECOVERY·PROGRESS 읽기) + 작업 마커 규칙 + 제약(scope 확장 금지·테스트 삭제 금지) + `BLOCKED:` 출구. 절차는 조건에 넣지 않고 PLAN·RECOVERY에 둔다.
 
 **작업 체크리스트 (v0.7.0)**: 새로 만드는 PLAN.md의 각 마일스톤에 `- [ ] M{N}-T{K}: 작업` 행을 2~6개 만든다(규칙은 `templates.md` `{MILESTONE_TASK_ROWS}`). `[ ]` 대기 · `[>]` 진행 · `[x]` 완료 · `[!]` 사람 판단·외부 입력 대기. 범위·완료 조건·검증 문장은 그대로 두고 생성 시에만 작업을 나눈다. **이어가기 분기나 사람이 쓴 기존 PLAN은 다시 쓰지 않는다.**
 
@@ -126,23 +135,23 @@ PRD acceptance criteria를 그룹화하여 마일스톤 초안 생성. ≤5개 �
 - `PLAN.md` 참조 문서 목록에 원장 위치를 남기고, 기존 항목 식별자가 있으면 그대로 사용한다.
 - 결과에 영향을 주는 미확정 가정은 `VALIDATION.md`의 해당 완료 기준에 확인 방법을 연결한다. 지금 확인할 수 없으면 미검증으로 남기며 통과로 처리하지 않는다.
 - 실행을 막는 가정과 아직 확인하지 못한 항목은 `PROGRESS.md`의 리스크·다음 단계에 남긴다. 이미 확인된 항목을 다시 미결로 만들지 않는다.
-- `goal-command.md`에는 원장 전체를 복사하지 않는다. 기존 PLAN/VALIDATION 문서 참조를 통해 전달하여 4,000자 예산을 유지한다.
+- `goal-command.md`에는 원장 전체를 복사하지 않는다. 기존 PLAN/VALIDATION 문서 참조를 통해 전달하여 골 조건을 짧게 유지한다.
 
 **디자인 레퍼런스 승계 (Step 1에서 감지된 경우 + UI 관련 작업 유형일 때만)**:
 - `PLAN.md` 참조 문서 목록에 `PRD/references/ (디자인 레퍼런스 — 스타일: {query.style})` 한 줄 추가.
 - `VALIDATION.md` 시각 검증(또는 수동 확인 절차)에 "UI 산출물이 `PRD/references/`의 레퍼런스 스타일 방향({스타일 키워드})과 부합하는가 — 구현 전 이미지를 Read로 열어 방향 확인" 항목 1개 추가.
 - 저작권 가드 1줄 승계: "레퍼런스 이미지는 방향 참고 전용 — 산출물에 복사/재게시 금지."
-- goal-command.md 본문에는 넣지 않는다(4,000자 예산 보호) — 골 세션은 PLAN/VALIDATION을 읽으므로 그쪽에서 전달된다.
+- goal-command.md 본문에는 넣지 않는다(골 조건을 짧게 유지) — 골 세션은 PLAN/VALIDATION을 읽으므로 그쪽에서 전달된다.
 
 **멀티에이전트 게이트 승계 (kkirikkiri 설치 시에만 — v0.6.2)**:
 `~/.claude/plugins/cache/*/kkirikkiri/*/scripts/wf-lint.js`가 존재하면(Glob 1회) RECOVERY.md의 기본 원칙에 다음 1항목을 추가한다 — 골 세션이 스스로 팀·워크플로를 만들 때도 같은 규율을 받게 하는 결선이다:
 - "골 작업 중 서브에이전트 팬아웃·Workflow를 사용할 때는 kkirikkiri 게이트를 따른다: Workflow 스크립트는 발사 전 `node <kkirikkiri>/scripts/wf-lint.js <script>` 통과 필수, 팀원 정의에는 경계 블록(tools·write_scope·stop·effort) 명시, 검증 역할은 read-only."
 **kkirikkiri가 없으면 이 항목을 조용히 건너뛴다** — 경고·설치 권유 없이 무동작 (graceful fallback, 미설치 환경을 깨지 않는다).
 
-### Step 6: goal-command.md 4,000자 자동 컴팩트
+### Step 6: goal-command.md 길이 확인 (목표 600자, 4,000자 컴팩트는 비상용)
 **타입**: prompt + Bash
 
-`compact-strategy.md`의 5단계를 인라인으로 적용한다. 텍스트 변환은 Claude가 수행, 단계별 길이 측정은 `python3 -c "print(len(open('goal-command.md').read()))"`로 결정론적으로 측정.
+F 템플릿을 따르면 보통 600자 안에 들어 이 단계는 길이만 재고 끝난다. 600자를 넘을 때만 `compact-strategy.md`의 줄이기 단계를 인라인으로 적용하고, 4,000자 상한은 어떤 경우에도 넘지 않는다. 텍스트 변환은 Claude가 수행, 단계별 길이 측정은 `python3 -c "print(len(open('goal-command.md').read()))"`로 결정론적으로 측정.
 
 우선순위 5단계:
 
@@ -159,25 +168,28 @@ PRD acceptance criteria를 그룹화하여 마일스톤 초안 생성. ≤5개 �
 
 LLM 인지에만 의존하지 않는다. Bash 도구로 결정론적 검증한다.
 
-1. **문자수 ≤ 4,000자**: `python3 -c "import sys; print(len(open(sys.argv[1]).read()))" goal-command.md` (UTF-8 char 단위).
+1. **문자수 ≤ 4,000자 (목표 600자)**: `python3 -c "import sys; print(len(open(sys.argv[1]).read()))" goal-command.md` (UTF-8 char 단위). 600자 초과는 경고 — Step 6 줄이기를 다시 적용하고, 그래도 넘으면 Step 8 요약에 알린다.
 2. **PROTECTED_CLAUSES 5종 한·영 OR 정규식 매칭**: `compact-strategy.md` §보호 영역의 5개 정규식을 `grep -P` 또는 Python으로 매칭. 5개 모두 hit 필수.
+2-1. **판정 가능한 조건 모양 (v0.9.0)**: `compact-strategy.md`의 `verify_condition_shape` — S1 `BLOCKED` 출구 + 멈춤 문구, S2 출력·종료 코드(exit code) 증거 문구, S3 빈 줄 없는 한 문단. `failures`가 비어야 한다.
 3. **`/goal ` 시작 검증**: `grep -cE '^/goal ' goal-command.md` 결과가 1 이상.
 4. **약어 치환 후 미정의 약어 없음**: 본문에서 `\b[A-Z]+\.md\b` 패턴 추출 후 표준 약어(VALIDATION/RECOVERY/PLAN/PROGRESS/PRD/SDD)와 본문 상단 `[약어]` 범례 정의 외에 등장하는지 확인.
 4-1. **작업 상태 규칙 (v0.7.0)**: 새 PLAN.md는 마일스톤마다 `^- (목적|Purpose):` 줄(v0.7.2)과 `^- \[ \] M\d+[a-z]?-T\d+:` 행이 1개 이상이고 작업 ID 중복이 없어야 한다. goal-command.md는 `compact-strategy.md`의 `verify_task_rule`(PLAN.md 언급 + `[>]`·`[x]`·`[!]` 마커)을 통과해야 한다. 체크리스트가 없는 기존 PLAN(이어가기 분기)은 이 검사를 건너뛴다.
 4-2. **쉬운 말 점검 (v0.7.1)**: 새 PLAN.md의 작업 행과 마일스톤 이름을 한 줄씩 다시 읽고, PRD에서 처음 만든 약칭·코드명이나 비유·은어가 풀이 없이 남은 줄, 조건·동작이 셋 이상 이어진 줄, 무엇을 남기는지 빠진 "기록한다"류 줄을 찾아 고쳐 쓴다. 작업 ID·순서·개수는 바꾸지 않는다. 이 점검은 고쳐 쓰기만 하며 폐기 사유가 아니다.
-5. **acceptance 매핑 누락 없음**: VALIDATION.md의 `## 완료 기준 매핑` 테이블 행 수가 PRD acceptance criterion 수 이상인지 확인.
+5. **acceptance 매핑 누락 없음**: VALIDATION.md의 `## 완료 기준 매핑` 테이블 행 수가 PRD acceptance criterion 수 이상인지 확인. 매핑 표에 상태 열이 없어야 한다.
+5-1. **완료 계약 JSON (v0.9.0)**: `python3 -c "import json;json.load(open('acceptance.json'))"` 종료 코드 0. 이어서 최상위가 배열이고 모든 항목이 정확히 `id`·`criterion`·`check_command`·`passes`·`evidence` 키를 가지며 `passes`는 `false`, `evidence`는 `""`, id 중복 없음인지 확인: `python3 -c "import json;a=json.load(open('acceptance.json'));K={'id','criterion','check_command','passes','evidence'};assert isinstance(a,list) and a and all(set(x)==K and x['passes'] is False and x['evidence']=='' for x in a) and len({x['id'] for x in a})==len(a)"`.
+5-2. **사람 확인 분리**: VALIDATION.md 필수 검증 표에 "수동"·"manual"·"눈으로" 같은 사람 확인이 행으로 들어 있지 않아야 한다. 있으면 명령으로 바꾸거나 `사람 확인 항목`으로 옮긴다.
 6. **헤딩 언어 일관성 검사 (`output_lang` 기준)**: 생성 문서 헤딩이 모두 감지 언어여야 한다 — 교차 언어 헤딩 0건.
-   - `output_lang = ko` → 영어 헤딩 잔존 검사: `grep -nE "^## (Required Checks|Targeted Checks|Manual Verification|Acceptance Criteria Mapping|Not Done If|Core Rule|Failure Loop|Retry Limit|Scope Control|Reorientation Rule|Revert Rule|Goal|Source Documents|Final Completion Criteria|Current Goal|Current Milestone|Completed|Last Validation|Failed Attempts|Current Best State|Next Step|Risks|Handoff Notes|Visual Verification|Milestone)\b"` → 0건.
-   - `output_lang = en` → 한국어 헤딩 잔존 검사: `grep -nE "^## (필수 검증|마일스톤별 검증|수동 확인 절차|완료 기준 매핑|완료로 보지 않는 조건|시각 검증|기본 원칙|실패 루프|재시도 한계|scope 잠금|방향 재확인 규칙|되돌리기 규칙|목표|참조 문서|최종 완료 기준|현재 골|현재 마일스톤|마지막 검증 결과|실패 시도|현재 가장 안정적인 상태|다음 단계|리스크|인수인계 메모|마일스톤|완료)"` → 0건.
-   - 그 외 언어 → 교차 grep 생략, 필수 섹션 키 존재 검사로 폴백 (VALIDATION 4 + RECOVERY 6 + PLAN 3 + PROGRESS 9 헤딩 개수 충족).
+   - `output_lang = ko` → 영어 헤딩 잔존 검사: `grep -nE "^## (Required Checks|Targeted Checks|Human Checks|Manual Verification|Acceptance Criteria Mapping|Completion Contract|Not Done If|Core Rule|Failure Loop|Retry Limit|Git Checkpoints|Resuming After Compaction|Scope Control|Reorientation Rule|Revert Rule|Goal|Source Documents|Final Completion Criteria|Resume Order|Current Goal|Current Milestone|Checkpoint Commits|Completed|Last Validation|Failed Attempts|Decision Log|Current Best State|Next Step|Risks|Handoff Notes|Visual Verification|Milestone)\b"` → 0건.
+   - `output_lang = en` → 한국어 헤딩 잔존 검사: `grep -nE "^## (필수 검증|마일스톤별 검증|사람 확인 항목|수동 확인 절차|완료 기준 매핑|완료 계약|완료로 보지 않는 조건|시각 검증|기본 원칙|실패 루프|재시도 한계|git 체크포인트|컴팩션 뒤 재개|scope 잠금|방향 재확인 규칙|되돌리기 규칙|목표|참조 문서|최종 완료 기준|재개 순서|현재 골|현재 마일스톤|체크포인트 커밋|마지막 검증 결과|실패 시도|결정 기록|현재 가장 안정적인 상태|다음 단계|리스크|인수인계 메모|마일스톤|완료)"` → 0건.
+   - 그 외 언어 → 교차 grep 생략, 필수 섹션 키 존재 검사로 폴백 (VALIDATION 6 + RECOVERY 8 + PLAN 3 + PROGRESS 11 헤딩 개수 충족).
    위반 1건 이상이면 템플릿 언어 렌더링 실패 → 폐기.
 
-하나라도 실패 → `compact-strategy.md` §구조적 오버플로우 보고로 분기. **5종 파일을 저장하지 않는다.**
+하나라도 실패 → `compact-strategy.md` §구조적 오버플로우 보고로 분기. **5종 문서와 acceptance.json을 저장하지 않는다.**
 
 ### Step 8: 사용자 언어 검토 요약 표시 + PROGRESS.md prepend
 **타입**: prompt + Bash
 
-별도 파일을 만들지 않는다. `output_lang` 검토 요약을 **대화창에 직접 출력**하고, 핸드오프 용도로 **PROGRESS.md 상단에 4줄 요약을 prepend**한다.
+별도 파일을 만들지 않는다. `output_lang` 검토 요약을 **대화창에 직접 출력**하고, 핸드오프 용도로 **PROGRESS.md의 `## 재개 순서` 섹션 바로 아래에 4줄 요약을 넣는다**(재개 순서는 항상 맨 위에 남는다).
 
 **대화창 출력 형식** (5섹션 — 아래 헤딩도 `output_lang`으로 렌더링한다, 한국어는 예시):
 
@@ -204,15 +216,17 @@ LLM 인지에만 의존하지 않는다. Bash 도구로 결정론적 검증한�
 - (없으면 "없음")
 
 ## 시작 직전 확인
-- goal-command.md: {CHAR_COUNT}자 / 4,000자
-- PROTECTED_CLAUSES 5종: 모두 통과
+- goal-command.md: {CHAR_COUNT}자 (목표 600자 / 상한 4,000자)
+- PROTECTED_CLAUSES 5종 + BLOCKED 출구·출력/종료 코드 증거: 모두 통과
+- acceptance.json: 기준 {AC_COUNT}개, JSON 유효
+- 사람 확인 항목: {HUMAN_CHECK_COUNT}개 (완료를 막는 항목 {BLOCKING_HUMAN_COUNT}개)
 - 교차 언어 헤딩 잔존: 0건
-- 생성된 파일: VALIDATION.md, RECOVERY.md, PLAN.md, PROGRESS.md, goal-command.md
+- 생성된 파일: VALIDATION.md, RECOVERY.md, PLAN.md, PROGRESS.md, goal-command.md, acceptance.json
 ```
 
-**PROGRESS.md 상단 prepend (4줄)**:
+**PROGRESS.md 요약 삽입 (4줄)**:
 
-핸드오프 시 PROGRESS.md만 봐도 컨텍스트를 잡을 수 있도록 다음 블록을 PROGRESS.md 맨 앞에 삽입한다 (기존 본문은 그 아래로 밀린다).
+핸드오프 시 PROGRESS.md만 봐도 컨텍스트를 잡을 수 있도록 다음 블록을 `## 재개 순서` 섹션 바로 다음에 삽입한다 (나머지 본문은 그 아래로 밀린다).
 
 ```md
 ## 골 검토 요약 (Step 8 자동 생성)
@@ -268,9 +282,9 @@ LLM 인지에만 의존하지 않는다. Bash 도구로 결정론적 검증한�
 ```
 검토하신 골을 지금 시작합니다. 완료 조건 도달 시 PROGRESS.md에 자동 기록되니 그쪽에서 진척을 확인하세요.
 
-생성 파일: VALIDATION.md / RECOVERY.md / PLAN.md / PROGRESS.md / goal-command.md
+생성 파일: VALIDATION.md / RECOVERY.md / PLAN.md / PROGRESS.md / goal-command.md / acceptance.json
 
-/goal PRD.md의 모든 acceptance criterion이 만족되고 VALIDATION.md의 필수 검증이 통과될 때까지 멈추지 말고 PLAN.md의 기능을 구현한다. 먼저 PRD.md, VALIDATION.md, RECOVERY.md, PLAN.md를 읽는다. ... (이하 output_lang 본문)
+/goal PLAN.md의 모든 작업이 `[x]`이고 VALIDATION.md 필수 검증이 모두 통과하면 완료다. 각 검증 명령의 실제 출력과 종료 코드(exit code)를 대화에 그대로 보이고 ... (이하 output_lang 한 문단, BLOCKED 출구로 끝남)
 ```
 
 **중요**: `/goal` 줄이 응답의 마지막에 와야 한다. 그 뒤에 어떤 텍스트도 붙이지 않는다.
@@ -286,10 +300,10 @@ LLM 인지에만 의존하지 않는다. Bash 도구로 결정론적 검증한�
 
 ## References
 
-- **`references/templates.md`** — 5개 파일 템플릿(+§헤딩 맵 ko/en) + F-1~F-6 본문, `output_lang`으로 렌더링
+- **`references/templates.md`** — 5개 문서 템플릿(+§헤딩 맵 ko/en) + F-1~F-6 골 조건 뼈대 + §G acceptance.json, `output_lang`으로 렌더링
 - **`references/task-type-classifier.md`** — 한/영 키워드 기반 작업 유형 추정 규칙
 - **`references/task-type-templates.md`** — 작업 유형 6종 × 5개 파일 강조 항목 (`output_lang` additions)
-- **`references/compact-strategy.md`** — 4,000자 자동 컴팩트 5단계 + 한·영 OR PROTECTED_CLAUSES 정규식
+- **`references/compact-strategy.md`** — 목표 600자·비상용 4,000자 컴팩트 5단계 + 한·영 OR PROTECTED_CLAUSES 정규식 + 조건 모양 검사(S1~S3)
 - **`references/policy-excerpt.md`** — 번들 정책 발췌 (언어 §1·§2·§3·§5, 질문 §1·§2a·§2c)
 
 ## 동작 메커니즘
@@ -297,18 +311,19 @@ LLM 인지에만 의존하지 않는다. Bash 도구로 결정론적 검증한�
 이 스킬은 별도 Python 스크립트 없이 인라인으로 동작한다.
 
 - **PRD 파싱 (Step 0~1)**: Bash + Grep으로 `.md` 파일 목록·acceptance 패턴·작업 유형 키워드 추출
-- **자동 컴팩트 (Step 6)**: Claude가 `compact-strategy.md`의 5단계를 순서대로 적용 (텍스트 변환)
-- **검증 (Step 7)**: Bash `grep -P` + `python3 -c "print(len(...))"`로 PROTECTED_CLAUSES 정규식·문자수·교차 언어 헤딩 잔존을 결정론적으로 매칭
-- **검토 요약 (Step 8)**: 대화창에 `output_lang` 요약 출력 + PROGRESS.md 상단에 4줄 요약 prepend
+- **길이 확인·컴팩트 (Step 6)**: 600자를 넘을 때만 Claude가 `compact-strategy.md`의 단계를 순서대로 적용 (텍스트 변환)
+- **검증 (Step 7)**: Bash `grep -P` + `python3`로 PROTECTED_CLAUSES·조건 모양 정규식·문자수·acceptance.json 유효성·교차 언어 헤딩 잔존을 결정론적으로 매칭
+- **검토 요약 (Step 8)**: 대화창에 `output_lang` 요약 출력 + PROGRESS.md 재개 순서 아래에 4줄 요약 삽입
 - **골 시작 (Step 10)**: 응답 마지막 줄로 `/goal {본문}` 텍스트 출력 → `hooks/register.ts`의 `turn.complete` 훅이 그 줄을 `/goal` 명령으로 실행(0.8.0+). 관리 명령(`/goal clear`)·서브에이전트 턴·중단된 턴은 제외
 
 ## 핵심 원칙
 
 - **사용자 언어 검토 우선**: 생성 문서는 `output_lang`(사용자 요청 언어)으로 떨어진다. 사용자가 읽고 검토할 수 있어야 승인에 의미가 있기 때문 — 검토 불가능한 언어로 생성하지 않는다(한국어 사용자=한국어, 영어 사용자=영어).
-- **검토 요약은 채팅에만**: 별도 파일을 만들지 않는다. PROGRESS.md 상단에 4줄 요약을 prepend해 핸드오프 시 컨텍스트만 보존한다.
-- **경고로 끝내지 않는다**: 4,000자 초과는 항상 컴팩트로 해결. 못 맞추면 결과물 저장 안 함.
+- **검토 요약은 채팅에만**: 별도 파일을 만들지 않는다. PROGRESS.md 재개 순서 아래에 4줄 요약을 넣어 핸드오프 시 컨텍스트만 보존한다.
+- **골 조건은 판정할 수 있게 짧게**: 판정 모델은 조건과 대화만 본다. 끝난 상태·증거 규칙·제약·`BLOCKED` 출구만 한 문단(목표 600자)에 두고 절차는 PLAN·RECOVERY로 보낸다. 4,000자 초과는 항상 컴팩트로 해결하고, 못 맞추면 결과물을 저장하지 않는다.
+- **막히면 멈춘다**: 사람을 기다리며 맴돌지 않는다. 같은 검증 3회 실패나 구조적 막힘은 PROGRESS.md `BLOCKED:` 기록 후 멈추는 정당한 종료다.
 - **PROTECTED_CLAUSES는 불가침**: 5종은 어떤 컴팩트 단계에서도 삭제하지 않는다.
-- **세부 작업의 정본은 PLAN.md 체크리스트다**: 실행 중에는 마커(`[ ]`/`[>]`/`[x]`/`[!]`)만 바뀐다. PROGRESS.md는 실행 로그이며 작업 상태를 재정의하지 않는다. 별도 progress.json은 만들지 않는다. 진행 보드가 필요하면 playmaker 플러그인이 이 두 파일을 읽어 보여 준다.
+- **상태 정본은 둘, 겹치지 않는다**: 세부 작업 상태의 정본은 PLAN.md 체크리스트다 — 실행 중에는 마커(`[ ]`/`[>]`/`[x]`/`[!]`)만 바뀌고 `[>]`는 한 번에 하나다. 완료 기준(acceptance criteria) 통과 여부의 정본은 `acceptance.json`이다 — 검증을 돌린 뒤에만 `passes`·`evidence`가 바뀐다. PROGRESS.md는 실행 로그(커밋 해시·결정 기록·블로커)이며 둘 중 어느 상태도 재정의하지 않는다. 작업 상태용 progress.json은 따로 만들지 않는다. 진행 보드가 필요하면 playmaker 플러그인이 PLAN.md·PROGRESS.md를 읽어 보여 준다.
 - **Claude Code 전용**: `target_cli = claude_code` 자동 고정. pause/resume 미지원.
 - **사람 검토 안전장치 우회 금지**: Step 9 승인 게이트 없이 Step 10이 골을 시작하지 않는다.
 - **승인 한 번으로 시작**: Step 10은 응답 마지막 줄로 `/goal`을 보내고, 훅이 그 줄을 바로 실행해 골을 시작한다. 사용자가 본문을 따로 입력할 필요는 없다.

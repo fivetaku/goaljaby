@@ -1,10 +1,1 @@
-/goal PRD.md의 모든 acceptance criterion이 만족되고 VALIDATION.md의 필수 검증이 통과될 때까지 멈추지 말고 PLAN.md의 설정 영속화 기능을 구현한다.
-
-먼저 PRD.md, VALIDATION.md, RECOVERY.md, PLAN.md를 읽는다.
-마일스톤 단위로 작업한다.
-PRD.md와 PLAN.md를 벗어나는 scope 확장은 금지한다.
-Non-goals 항목이나 선택 기능은 구현하지 않는다.
-각 마일스톤이 끝나면 검증을 실행한다.
-작업을 시작하면 PLAN.md의 해당 줄을 `[>]`, 끝나면 `[x]`, 사람 판단이 필요하면 `[!]`로 바꾼다(마커만).
-각 마일스톤이 끝나면 PROGRESS.md를 업데이트한다.
-요구사항이 충돌하거나 검증이 3회(3 attempts) 실패하면 자체 수정을 멈추고 사람의 결정을 기다린다 (Claude Code는 /goal pause를 지원하지 않음).
+/goal PLAN.md의 모든 작업이 `[x]`이고 VALIDATION.md 필수 검증이 모두 통과하면 완료다. 각 검증 명령의 실제 출력과 종료 코드(exit code)를 대화에 그대로 보이고, acceptance.json은 그 검증을 돌린 뒤에만 `passes`를 바꾼다. 먼저 01_PRD.md, PLAN.md, VALIDATION.md, RECOVERY.md, PROGRESS.md를 읽고 PROGRESS.md의 재개 순서를 따른다. 작업을 시작하면 PLAN.md의 해당 줄을 `[>]`, 끝나면 `[x]`, 사람 판단이 필요하면 `[!]`로 바꾸고, 작업마다 PROGRESS.md를 업데이트한다. 01_PRD.md와 PLAN.md 밖으로 scope 확장은 금지하고 Non-goals는 구현하지 않으며, 테스트를 지우거나 건너뛰지 않는다. 같은 검증이 3회 실패하거나 구조적으로 막히면 PROGRESS.md에 `BLOCKED:` 사유·시도 3개·다음 안전한 선택지를 적고 멈춘다 — 이것도 정당한 종료다.

@@ -16,7 +16,7 @@ If the output is empty, just continue silently. (AskUserQuestion must NOT be in 
 
 > **언어 정책 (skills/goaljaby/references/policy-excerpt.md)**: 사용자 요청 언어(`output_lang`)로 출력한다. 한국 제작이라고 한국어를 기본값으로 두지 말 것(§1). 파일명·명령·약어 등 식별자는 번역 안 함(§2). AskUserQuestion의 question/label/description도 사용자 언어로 번역해 호출한다(§3).
 
-PRD 디렉토리를 받아 `output_lang`(사용자 언어) 검토 문서 5종(VALIDATION/RECOVERY/PLAN/PROGRESS/goal-command.md)을 생성하고, Step 8에서 `output_lang` 검토 요약을 대화창에 띄우고 PROGRESS.md 상단에 4줄 요약을 prepend한다. 사용자 검토·승인을 거쳐 응답 마지막 줄로 `/goal`을 보내고, 플러그인 훅이 그 줄을 바로 실행해 골 작업을 시작한다(복사·붙여넣기 없음). 사용자가 본문을 따로 입력할 필요는 없다.
+PRD 디렉토리를 받아 `output_lang`(사용자 언어) 검토 문서 5종(VALIDATION/RECOVERY/PLAN/PROGRESS/goal-command.md)과 완료 계약 `acceptance.json`을 생성하고, Step 8에서 `output_lang` 검토 요약을 대화창에 띄우고 PROGRESS.md 재개 순서 아래에 4줄 요약을 넣는다. 사용자 검토·승인을 거쳐 응답 마지막 줄로 `/goal`을 보내고, 플러그인 훅이 그 줄을 바로 실행해 골 작업을 시작한다(복사·붙여넣기 없음). 사용자가 본문을 따로 입력할 필요는 없다.
 
 ## 인수 파싱
 
@@ -29,7 +29,7 @@ PRD 디렉토리를 받아 `output_lang`(사용자 언어) 검토 문서 5종(VA
 1. `skills/goaljaby/SKILL.md`의 워크플로우 10단계를 순서대로 실행한다.
    - PRD 디렉토리에 `references/`(디자인 레퍼런스, show-me-the-prd v0.10+)가 있으면 Step 1에서 감지해 Step 5에서 PLAN/VALIDATION에 승계한다. 없으면 아무 변화 없음 — 재수집하지 않는다.
 2. Step 2 (Claude Code 운영 컨텍스트 자동 확정) → Step 3 작업 유형·검증 방식·엄격도 → Step 4 마일스톤 확정까지 인터뷰 진행.
-3. Step 5에서 `output_lang`으로 5개 파일 생성(§헤딩 맵 적용), Step 6에서 4,000자 자동 컴팩트, Step 7 자체 검증 (PROTECTED_CLAUSES 한·영 OR 정규식 + 교차 언어 헤딩 잔존 검사).
+3. Step 5에서 `output_lang`으로 5개 문서 + `acceptance.json` 생성(§헤딩 맵 적용), Step 6에서 골 조건 길이 확인(목표 600자, 4,000자 컴팩트는 비상용), Step 7 자체 검증 (PROTECTED_CLAUSES 한·영 OR 정규식 + BLOCKED 출구·출력/종료 코드 증거 + acceptance.json 유효성 + 교차 언어 헤딩 잔존 검사).
 4. Step 8에서 `output_lang` 검토 요약을 대화창에 표시 + PROGRESS.md 상단에 4줄 요약 prepend (별도 파일 X).
 5. Step 9 사람 검토 게이트(AskUserQuestion): 승인 / 수정 / 나중에 / 취소.
 6. 승인 시 Step 10에서 PROGRESS.md에 시작 기록 + 응답 *마지막 줄*에 `/goal {본문 한 줄}` 출력 → 플러그인 훅이 턴 종료 시 그 줄을 `/goal` 명령으로 실행해 골 작업을 시작(0.8.0+, 사람 재입력 불필요).

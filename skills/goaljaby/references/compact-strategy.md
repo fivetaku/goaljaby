@@ -1,6 +1,13 @@
-# 4,000자 자동 컴팩트 전략
+# 골 조건 길이 관리 — 목표 600자, 4,000자 컴팩트는 비상용
 
-골잡이의 핵심 약속 중 하나: `goal-command.md` 본문은 **항상 4,000자 이하**다. 경고로 끝내지 않는다. 사용자에게 결정을 미루지 않는다. 컴팩트는 스킬이 직접 수행한다.
+`/goal` 완료 판정은 작고 빠른 모델이 조건 문장과 대화만 보고 내린다(명령 실행·파일 읽기 없음). 그래서 `goal-command.md` 본문은 **판정할 수 있는 짧은 조건 한 문단**이다 — `templates.md` §F의 뼈대(끝난 상태 + 출력·종료 코드 증거 + 첫 행동 + 작업 상태 규칙 + 제약 + BLOCKED 출구)를 따르면 보통 450~600자로 끝난다.
+
+| 기준 | 값 | 성격 |
+|------|-----|------|
+| 목표 길이 | **600자 이하**, 빈 줄 없는 한 문단 | 기본 템플릿이 지켜야 할 목표. 넘으면 아래 줄이기 단계를 먼저 적용 |
+| 공식 상한 | 4,000자 | 절대 넘지 않는다. 아래 5단계 컴팩트는 이 상한을 넘을 때 쓰는 **비상용 폴백**이고, F 템플릿을 따르면 거의 쓸 일이 없다 |
+
+경고로 끝내지 않는다. 사용자에게 결정을 미루지 않는다. 줄이기와 컴팩트는 스킬이 직접 수행한다.
 
 **언어 정책 (policy-excerpt.md)**: `goal-command.md` 본문은 `output_lang`(사용자 언어) + 영어 식별자. PROTECTED_CLAUSES 정규식은 한국어/영어 둘 다 매칭하는 OR 패턴이라 ko/en 본문은 그대로 검증되고, 그 외 언어는 각 보호절에 ko 또는 en 앵커 표현을 유지해 매칭되게 한다.
 
@@ -18,7 +25,18 @@
 
 컴팩트 직후 5개 모두 정규식 매칭에 성공해야 한다. 하나라도 실패하면 컴팩트 결과를 폐기하고 구조적 오버플로우로 보고한다.
 
-## 5단계 우선순위 (한도 도달 시 즉시 중단)
+### 추가 검사 (v0.9.0 — P1~P5에 더해 함께 통과해야 함, P1~P5를 대신하지 않음)
+
+| ID | 검사 | 정규식 / 기준 |
+|----|------|------|
+| S1 | 막혔을 때의 출구 (`BLOCKED` 종료) | `BLOCKED` **그리고** `(멈춘다\|중단한다\|stop)` |
+| S2 | 출력·종료 코드를 대화에 남기는 규칙 | `(종료 코드\|exit code)` **그리고** `(출력\|output)` |
+| S3 | 한 문단 | 본문에 빈 줄(`\n\s*\n`)이 없다 — 훅이 마지막 문단만 실행한다 |
+| L1 | 목표 길이 | 600자 이하. 넘으면 실패가 아니라 **경고** — 아래 5단계 중 2·4·5단계를 적용해 다시 잰다. 그래도 넘으면 Step 8 요약에 길이와 사유를 한 줄로 알린다 |
+
+S1·S2·S3 중 하나라도 실패하면 결과를 폐기하고 F 템플릿의 해당 문장을 다시 넣어 재검증한다.
+
+## 5단계 우선순위 (비상용 — 600자 목표 또는 4,000자 상한을 넘을 때만, 한도 안에 들면 즉시 중단)
 
 | 단계 | 작업 | 절감 효과 | 위험 |
 |------|------|----------|------|
@@ -42,16 +60,16 @@ text = text.replace("  ", " ").strip()
 ```
 - 검증이 실패하면 먼저 실패 유형을 진단한다.
 - 에러를 침묵 처리하지 않는다. 테스트를 skip 처리하지 않는다.
-- 같은 검증이 3회(3 attempts) 실패하면 자체 수정을 멈추고 사람의 결정을 기다린다.
+- 같은 검증이 3회(3 attempts) 실패하면 PROGRESS.md에 `BLOCKED:` 블록을 적고 멈춘다.
 - PLAN.md에 명시되지 않은 public API 변경은 금지한다.
 ```
 
 컴팩트 후:
 ```
-- 모든 실패 처리·scope 규칙·3회(3 attempts) 룰은 RECOVERY.md를 따른다.
+- scope 확장은 금지하고, 같은 검증이 3회 실패하면 PROGRESS.md에 `BLOCKED:`를 적고 멈춘다. 그 밖의 실패 처리는 RECOVERY.md를 따른다.
 ```
 
-PROTECTED_CLAUSES P2·P3는 한 줄 안에 압축되어 정규식 매칭이 유지된다.
+PROTECTED_CLAUSES P2·P3와 추가 검사 S1은 한 줄 안에 압축되어 정규식 매칭이 유지된다. BLOCKED 출구 문장 자체는 외부화하지 않는다 — 판정 모델이 정당한 종료를 알아보려면 조건 안에 있어야 한다.
 
 ### 단계 3: 약어 치환
 
@@ -126,6 +144,22 @@ def verify_compact(text: str) -> list[str]:
     return failures
 
 
+# v0.9.0 — 판정 가능한 조건 모양 검사 (P1~P5와 별개, 함께 통과해야 함)
+TARGET_LEN = 600
+
+def verify_condition_shape(text: str) -> tuple[list[str], list[str]]:
+    failures, warnings = [], []
+    if not (re.search(r"BLOCKED", text) and re.search(r"(멈춘다|중단한다|stop)", text)):
+        failures.append("S1_blocked_exit: BLOCKED + stop phrase missing")
+    if not (re.search(r"(종료 코드|exit code)", text) and re.search(r"(출력|output)", text)):
+        failures.append("S2_evidence: output + exit code phrase missing")
+    if re.search(r"\n\s*\n", text.strip()):
+        failures.append("S3_single_paragraph: blank line inside condition")
+    if len(text.strip()) > TARGET_LEN:
+        warnings.append(f"L1_target: {len(text.strip())} > {TARGET_LEN}")
+    return failures, warnings
+
+
 # v0.7.0 — 생성된 PLAN.md에 작업 체크리스트가 있을 때만 적용 (P1~P5와 별개)
 def verify_task_rule(text: str, plan_has_tasks: bool) -> list[str]:
     if not plan_has_tasks:
@@ -139,9 +173,9 @@ def verify_task_rule(text: str, plan_has_tasks: bool) -> list[str]:
     return failures
 ```
 
-`TASK_STATUS_RULE`이 실패하면 템플릿의 작업 상태 규칙 문장(약 90자)을 P5 문장 바로 앞에 다시 넣고 재검증한다. 그래도 4,000자를 넘으면 구조적 오버플로우로 처리한다.
+`TASK_STATUS_RULE`이 실패하면 템플릿의 작업 상태 규칙 문장(약 90자)을 P5 문장 바로 앞에 다시 넣고 재검증한다(P5는 같은 문장 끝 "PROGRESS.md를 업데이트한다"). 그래도 4,000자를 넘으면 구조적 오버플로우로 처리한다.
 
-`verify_compact`와 `verify_task_rule`의 `failures`가 모두 비어 있어야 컴팩트 통과. 비어 있지 않으면 결과 폐기 + 구조적 오버플로우 보고.
+`verify_compact`·`verify_condition_shape`·`verify_task_rule`의 `failures`가 모두 비어 있어야 통과(`verify_condition_shape`의 `warnings`는 600자 목표 경고로, 줄이기 단계를 다시 적용하는 신호다). 비어 있지 않으면 결과 폐기 + 구조적 오버플로우 보고.
 
 **시작 검증 메모**: v0.2.x까지는 영어 명령형 동사(`Execute|Implement|Fix|Write|Migrate|Optimize`) 시작을 강제했으나, v0.3.0부터 비영어 본문(한국어 등 `output_lang`)을 지원하기 위해 시작 동사 강제를 제거하고 `/goal ` 다음에 condition이 있는지만 검증한다. 종료 판정은 small fast model(기본 Haiku)이 비영어 condition도 처리한다.
 
