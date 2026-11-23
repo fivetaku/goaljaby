@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.10.0 (2026-11-23)
+
+- **Codex에서도 같은 스킬로 동작**: 검토 문서 5종·acceptance.json·PLAN/PROGRESS 형식은 두 하네스가 같다. Claude Code는 Step 9 승인 뒤 응답 마지막 줄 `/goal`을 훅이 실행하는 기존 동작 그대로이고, Codex는 승인 뒤 `create_goal`로 골을 시작한다(`skills/goaljaby/references/codex.md`).
+- 질문 도구 4단계(async, Plan, 번호 블록, `codex exec`는 묻지 않음) 안내, SKILL 설명의 "Claude Code 전용" 표현 제거, 명령 파일은 SKILL.md를 읽고 따르는 얇은 형태로 정리.
+
 ## 0.9.0 (2026-11-22)
 
 - **판정 가능한 골 조건**: `/goal` 본문을 절차서(최대 4,000자)에서 한 문단 조건(목표 600자)으로 바꿨다 — 끝난 상태 + 검증 출력·종료 코드를 대화에 보이는 규칙 + 제약 + `BLOCKED` 출구. 판정 모델은 조건과 대화만 보기 때문이다. 4,000자 컴팩트는 비상용으로 내렸고, 조건 모양 검사(S1 BLOCKED·S2 출력/종료 코드·S3 한 문단)를 P1~P5에 더했다.

@@ -10,6 +10,13 @@ description: This skill should be used when the user asks to "/goaljaby", "골�
 
 > PRD를 `/goal` 운영 계약으로 변환하는 브릿지 스킬. **사용자 언어로** 검토 문서 5종을 생성하고, 검토 요약을 대화창에 띄운 뒤 승인하면 어시스턴트가 응답 마지막 줄로 `/goal`을 보내고, 플러그인 훅이 그 줄을 바로 실행해 골 작업을 시작한다(복사·붙여넣기 없음).
 
+## 실행 환경 (Claude Code / Codex)
+
+- **Claude Code**: `AskUserQuestion`으로 묻는다. Step 10은 응답 마지막 줄 `/goal …`을 turn.complete 훅이 실행한다(아래 Step 10).
+- **Codex**: 시작 전에 이 폴더 기준 `references/codex.md`를 읽는다. async 호출 형식: `{"questions":[{"title":"헤더 — 질문","options":["추천안 (추천) — 설명","대안 — 설명"]}]}` — 문항에는 `title`·`options`만, `question`·`header`·`id`는 넣지 않는다. Step 10은 `create_goal` 도구로 골을 시작한다.
+- Codex에서는 `${CLAUDE_PLUGIN_ROOT}`를 이 플러그인 루트(이 SKILL.md에서 두 단계 위 폴더)로 바꿔 읽는다. 아래 `references/…` 경로는 이 SKILL.md 폴더 기준이다.
+- 검토 문서 5종·`acceptance.json`·PLAN/PROGRESS 형식은 두 하네스가 같다.
+
 ## 이 스킬을 쓰는 이유
 
 PRD가 "무엇을 만들지"라면, `/goal`은 "어떻게 끝났음을 증명하고 실패에서 어떻게 돌아올지"의 운영 계약이다. 두 단계 사이의 빈 구간(VALIDATION/RECOVERY/PLAN 작성 + 판정 가능한 짧은 골 조건 + 사용자 언어 검토 + 골 시작)을 매번 손으로 채우는 대신 자동화한다.
@@ -63,7 +70,7 @@ PRD가 없으면 `/show-me-the-prd`로 위임한다 (Step 0).
 ### Step 0: PRD 사전 확인 + 입력 분기
 **타입**: Bash + AskUserQuestion (조건부)
 
-PRD 디렉토리 인수와 내용을 확인한다.
+PRD 디렉토리 인수와 내용을 확인한다. 인수가 "분석 [경로]"이면 기존 산출물 검토 모드로, 덮어쓰기 전에 반드시 확인한다.
 
 **0-A) 인수 있음 + 디렉토리 존재 + `.md` 1개 이상**
 - Bash로 acceptance criteria 패턴(`- [ ]`, "Acceptance Criteria", "완료 판정", "completion criteria") 확인. 없으면 Step 1에서 경고하지만 진행은 계속한다.
@@ -93,7 +100,7 @@ PRD 본문을 읽고 추출:
 ### Step 2: 운영 컨텍스트 확정 (자동)
 **타입**: 자동 (인터뷰 없음)
 
-이 스킬은 Claude Code v2.1.139+ 전용이다. CLI 분기 인터뷰는 없고 `target_cli = claude_code`로 자동 고정한다. 결과적으로:
+CLI 분기 인터뷰는 없다. Claude Code(v2.1.139+)에서는 `target_cli = claude_code`, Codex에서는 `target_cli = codex`로 실행 환경에 맞춰 자동 고정한다. 결과적으로:
 - RECOVERY.md는 pause/resume을 사용하지 않는다 (Claude Code는 `/goal pause` 미지원).
 - `goal-command.md`는 판정 가능한 한 문단(목표 600자, 공식 상한 4,000자 character 단위).
 - RECOVERY.md는 "사람을 기다린다" 대신 `BLOCKED` 종료(PROGRESS.md에 기록 후 멈춤)를 쓴다 — 기다리는 동안 판정이 계속 "아직"이라 맴돌기 때문.
@@ -247,23 +254,23 @@ LLM 인지에만 의존하지 않는다. Bash 도구로 결정론적 검증한�
 
 질문: "위 요약을 검토하셨나요? 어떻게 진행할까요?"
 
-- **승인 — 지금 골 작업 시작** (추천): Step 10으로 이동, 응답 마지막 줄로 `/goal`을 보내면 훅이 바로 실행한다.
+- **승인 — 지금 골 작업 시작** (추천): Step 10으로 이동한다. Claude Code는 응답 마지막 줄 `/goal`을 훅이 실행하고, Codex는 `create_goal`을 호출한다.
 - **수정 필요**: 어느 파일을 어떻게 바꿀지 자유 텍스트 입력 받기. 입력 받은 뒤 해당 파일만 재생성 후 Step 7부터 재검증.
 - **나중에 직접 실행**: 골을 시작하지 않음. `goal-command.md` 위치만 안내하고 종료.
 - **취소**: 5종 파일을 그대로 두고 종료.
 
-승인 게이트는 우회 불가. 한 번 승인으로 골이 시작되지만, 반드시 사용자 확인을 거친다.
+승인 게이트는 우회 불가(Codex에서도 질문 도구로 받는다). 질문 도구를 부른 뒤에는 턴을 끝내고 사용자의 다음 답이 승인일 때만 Step 10으로 간다. 한 번 승인으로 골이 시작되지만, 반드시 사용자 확인을 거친다.
 
-### Step 10: 승인 시 응답 마지막 줄로 /goal 보내기
+### Step 10: 승인 시 골 시작
 **타입**: prompt + Bash
 
-승인이 들어오면:
+**Codex**: `/goal` 슬래시 명령·mod 훅이 없으므로 아래 1~3 대신 `references/codex.md`의 "골 시작(create_goal)"을 따른다. **Claude Code**: 승인이 들어오면 아래를 따른다(동작 불변).
 
 1. **PROGRESS.md에 시작 기록** (Bash로 append):
    ```
    ## 골 시작 기록
    - 시작 시각: {ISO_TIMESTAMP}
-   - 사용 CLI: claude_code
+   - 사용 CLI: claude_code (Codex는 codex)
    - 컴팩트 후 본문 길이: {CHAR_COUNT}자
    ```
 
@@ -324,7 +331,7 @@ LLM 인지에만 의존하지 않는다. Bash 도구로 결정론적 검증한�
 - **막히면 멈춘다**: 사람을 기다리며 맴돌지 않는다. 같은 검증 3회 실패나 구조적 막힘은 PROGRESS.md `BLOCKED:` 기록 후 멈추는 정당한 종료다.
 - **PROTECTED_CLAUSES는 불가침**: 5종은 어떤 컴팩트 단계에서도 삭제하지 않는다.
 - **상태 정본은 둘, 겹치지 않는다**: 세부 작업 상태의 정본은 PLAN.md 체크리스트다 — 실행 중에는 마커(`[ ]`/`[>]`/`[x]`/`[!]`)만 바뀌고 `[>]`는 한 번에 하나다. 완료 기준(acceptance criteria) 통과 여부의 정본은 `acceptance.json`이다 — 검증을 돌린 뒤에만 `passes`·`evidence`가 바뀐다. PROGRESS.md는 실행 로그(커밋 해시·결정 기록·블로커)이며 둘 중 어느 상태도 재정의하지 않는다. 작업 상태용 progress.json은 따로 만들지 않는다. 진행 보드가 필요하면 playmaker 플러그인이 PLAN.md·PROGRESS.md를 읽어 보여 준다.
-- **Claude Code 전용**: `target_cli = claude_code` 자동 고정. pause/resume 미지원.
+- **실행 환경 자동 고정**: `target_cli = claude_code`(Claude Code) 또는 `codex`(Codex). pause/resume 미지원.
 - **사람 검토 안전장치 우회 금지**: Step 9 승인 게이트 없이 Step 10이 골을 시작하지 않는다.
 - **승인 한 번으로 시작**: Step 10은 응답 마지막 줄로 `/goal`을 보내고, 훅이 그 줄을 바로 실행해 골을 시작한다. 사용자가 본문을 따로 입력할 필요는 없다.
 - **자기 시연 가능**: 이 스킬 자체를 만드는 작업도 골잡이로 가능하다.

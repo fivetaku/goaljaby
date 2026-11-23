@@ -28,6 +28,8 @@ goaljaby takes a PRD folder (manual or from `/show-me-the-prd`) and auto-produce
 /plugin install goaljaby
 ```
 
+Codex: `codex plugin marketplace add fivetaku/gptaku_plugins` then `codex plugin add goaljaby@gptaku-plugins`.
+
 ### 3. Restart Claude Code
 
 ### 4. Run
